@@ -21,6 +21,7 @@ import { Calendar } from "@/components/ui/calendar";
 import StarkIcon from "@/components/icons/StarkIcon";
 import { FaEthereum } from "react-icons/fa";
 import { DialogComponent } from "@/components/modals/DialogComponent";
+import MaxIcon from "@/components/icons/MaxIcon";
 
 const Home = () => {
   const [network, setNetwork] = useState<"starknet" | "ethereum">("starknet");
@@ -68,8 +69,8 @@ const Home = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto p-6 mt-12">
-      <div className="rounded-2xl bg-[#212529] p-6 text-white border-neutral-500 border">
+    <div className="max-w-lg mx-auto px-2 mt-8">
+      <div className="rounded-2xl bg-[#212529] p-4 text-white border-neutral-500 border">
         <h2 className="text-xl font-bold mb-4">Generate Invoice</h2>
 
         {/* Amount Section */}
@@ -200,7 +201,10 @@ const Home = () => {
 
         {/* Invoice Summary */}
        <div className="rounded-lg border border-blue-500 p-4 mt-6">
+          <div className="flex items-start justify-between">
           <h3 className="text-lg font-semibold mb-4">Invoice Summary</h3>
+            <MaxIcon className="cursor-pointer" />
+        </div>
           <div className="flex justify-between items-center mb-2">
             <p className="text-sm text-neutral-400">Network:</p>
             <p className="text-sm text-neutral-300">{network}</p>

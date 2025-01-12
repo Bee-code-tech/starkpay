@@ -65,7 +65,7 @@ const Navbar: FC = () => {
                   <MenuIcon size={24} />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right">
+              <SheetContent side="top">
                 <SheetHeader>
                   <SheetTitle>
                     <Logo />
