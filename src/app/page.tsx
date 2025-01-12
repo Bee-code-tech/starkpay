@@ -22,6 +22,7 @@ import StarkIcon from "@/components/icons/StarkIcon";
 import { FaEthereum } from "react-icons/fa";
 import { DialogComponent } from "@/components/modals/DialogComponent";
 import MaxIcon from "@/components/icons/MaxIcon";
+import { InvoiceModal } from "@/components/modals/InvoiceModal";
 
 const Home = () => {
   const [network, setNetwork] = useState<"starknet" | "ethereum">("starknet");
@@ -31,6 +32,7 @@ const Home = () => {
   const [privateMode, setPrivateMode] = useState<boolean>(false);
   const [date, setDate] = useState<Date | undefined>();
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+  const [invoiceOpen, setInvoiceOpen] = useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
   const [description, setDescription] = useState<string>("");
 
@@ -67,6 +69,9 @@ const Home = () => {
   const cancelPrivateMode = () => {
     setDialogOpen(false);
   };
+  const closeInvoice = () => {
+    setInvoiceOpen(false);
+  };
 
   return (
     <div className="max-w-lg mx-auto px-2 mt-8">
@@ -78,7 +83,7 @@ const Home = () => {
         <div className="rounded-lg bg-neutral-700 p-4 mb-6">
           <div className="flex justify-start items-center mb-4">
             <Select value={network} onValueChange={(value) => setNetwork(value as "starknet" | "ethereum")}>
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-32 rounded-full">
                 <SelectValue placeholder="Select Network">
                   <div className="flex items-center gap-2">
                     <StarkIcon />
@@ -145,7 +150,7 @@ const Home = () => {
             placeholder="Add a description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full mb-4 bg-neutral-700 text-white"
+            className="w-full mb-4 bg-neutral-700 text-white text-xl"
           />
         </div>
 
@@ -190,20 +195,15 @@ const Home = () => {
           />
         </div>
 
-        {/* Reusable Dialog for Private Mode */}
-        <DialogComponent
-          open={dialogOpen}
-          title="Private Mode"
-          onConfirm={confirmPrivateMode}
-          onCancel={cancelPrivateMode}
-          onOpenChange={setDialogOpen}
-        />
+       
 
         {/* Invoice Summary */}
        <div className="rounded-lg border border-blue-500 p-4 mt-6">
           <div className="flex items-start justify-between">
-          <h3 className="text-lg font-semibold mb-4">Invoice Summary</h3>
-            <MaxIcon className="cursor-pointer" />
+            <h3 className="text-lg font-semibold mb-4">Invoice Summary</h3>
+            <div className="" onClick={() => setInvoiceOpen(true)}>
+            <MaxIcon className="cursor-pointer"  />
+            </div>
         </div>
           <div className="flex justify-between items-center mb-2">
             <p className="text-sm text-neutral-400">Network:</p>
@@ -243,7 +243,7 @@ const Home = () => {
               {privateMode ? "Enabled" : "Disabled"}
             </p>
           </div>
-          <div className="border-t border-blue-500 my-4"></div>
+          <div className="border-t border-neutral-500 my-4"></div>
           <div className="flex justify-between items-center">
             <p className="text-lg font-semibold">Total Amount:</p>
             <p className="text-lg font-bold text-neutral-100">
@@ -253,6 +253,22 @@ const Home = () => {
         </div>
 
         <Button className="w-full mt-6 bg-blue-600 text-white rounded-md py-5">Connect Wallet</Button>
+
+
+         <DialogComponent
+          open={dialogOpen}
+          title="Private Mode"
+          onConfirm={confirmPrivateMode}
+          onCancel={cancelPrivateMode}
+          onOpenChange={setDialogOpen}
+        />
+        <InvoiceModal
+          open={invoiceOpen}
+          email={email}
+          description={description}
+          date={date ? format(date, "PPP") : "Not set"}
+          onConfirm={closeInvoice}
+        />
       </div>
     </div>
   );
