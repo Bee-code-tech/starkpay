@@ -12,7 +12,7 @@ interface InvoiceModalProps {
     email: string;
     description: string;
     date: string;
-  onConfirm: () => void;
+    onConfirm: () => void;
 }
 
 export const InvoiceModal: React.FC<InvoiceModalProps> = ({
@@ -20,7 +20,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
     email,
     description,
     date,
-  onConfirm,
+    onConfirm,
 }) => {
   return (
     <Dialog open={open} onOpenChange={onConfirm}>
