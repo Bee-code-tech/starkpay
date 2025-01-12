@@ -14,6 +14,7 @@ import { PopoverTrigger } from "@radix-ui/react-popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
+import StarkIcon from "@/components/icons/StarkIcon";
 
 const Home = () => {
   const [network, setNetwork] = useState("starknet");
@@ -37,7 +38,7 @@ const Home = () => {
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Select Network">
                   <div className="flex items-center gap-2">
-                    <FaEthereum />
+                    <StarkIcon />
                     {network === "starknet" ? "StarkNet" : "Ethereum"}
                   </div>
                 </SelectValue>
@@ -45,7 +46,7 @@ const Home = () => {
               <SelectContent>
                 <SelectItem value="starknet">
                   <div className="flex items-center gap-2">
-                    <FaEthereum />
+                    <StarkIcon />
                     StarkNet
                   </div>
                 </SelectItem>
@@ -60,16 +61,19 @@ const Home = () => {
           </div>
 
           <div className="flex items-center gap-4 mb-2">
-            {/* Input */}
-           <Input
+            <Input
               placeholder="0"
-              className="flex-1 border-none bg-none text-white"
+              className="flex-1 border-b-2 border-transparent bg-none text-white text-2xl font-bold focus:border-b-white focus:outline-none"
             />
+
 
             {/* Coin Dropdown */}
             <Select value={coin} onValueChange={(value) => setCoin(value)}>
-              <SelectTrigger className="w-28">
-                <SelectValue placeholder="Select Coin">{coin}</SelectValue>
+              <SelectTrigger className="w-[87px] rounded-full">
+                <div className="flex items-center gap-1 ">
+                  <FaEthereum />
+                   <SelectValue placeholder="Select Coin">{coin}</SelectValue>
+                 </div>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ETH">ETH</SelectItem>
@@ -129,12 +133,15 @@ const Home = () => {
 
        
 
-        {/* Date Picker */}
-        {/* <DatePicker className="w-full mb-6 bg-neutral-600 text-white" /> */}
 
         {/* Private Mode Box */}
-        <div className="rounded-lg bg-neutral-700 p-4 mb-6 flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Private Mode</h3>
+        <div className="rounded-lg bg-neutral-700 p-4 mb-6 flex justify-between items-start">
+          <div className="flex flex-col">
+            <h3 className="text-lg font-semibold">Private Mode</h3>
+            <p className="text-sm text-neutral-400">
+              Invoice created will only be seen and accessible by only you and payer
+            </p>
+          </div>
           <Switch checked={privateMode} onCheckedChange={setPrivateMode} />
         </div>
 
