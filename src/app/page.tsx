@@ -74,7 +74,7 @@ const Home = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto px-2 mt-8">
+    <div className="max-w-lg mx-auto px-2 mt-8 mb-12">
       <div className="rounded-2xl bg-[#212529] p-4 text-white border-neutral-500 border">
         <h2 className="text-xl font-bold mb-4">Generate Invoice</h2>
 
