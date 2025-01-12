@@ -1,12 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { FaEthereum } from "react-icons/fa";
 import { CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent } from "@/components/ui/popover";
 import { PopoverTrigger } from "@radix-ui/react-popover";
@@ -14,26 +19,64 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import StarkIcon from "@/components/icons/StarkIcon";
+import { FaEthereum } from "react-icons/fa";
+import { DialogComponent } from "@/components/modals/DialogComponent";
 
 const Home = () => {
-  const [network, setNetwork] = useState("starknet");
-  const [coin, setCoin] = useState("ETH");
-  const [conversionRate] = useState("≈ @$33,990");
-  const [privateMode, setPrivateMode] = useState(false);
-   const [date, setDate] = React.useState<Date>() 
+  const [network, setNetwork] = useState<"starknet" | "ethereum">("starknet");
+  const [coin, setCoin] = useState<"ETH" | "BTC">("ETH");
+  const [conversionRate, setConversionRate] = useState<number>(0);
+  const [amount, setAmount] = useState<number>(0);
+  const [privateMode, setPrivateMode] = useState<boolean>(false);
+  const [date, setDate] = useState<Date | undefined>();
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+  const [email, setEmail] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+
+  const privateModeFee = 20.0;
+
+  const rates = {
+    starknet: { ETH: 3000, BTC: 40000 },
+    ethereum: { ETH: 3200, BTC: 41000 },
+  };
+
+  useEffect(() => {
+    const rate = rates[network]?.[coin] || 0;
+    setConversionRate(rate);
+  }, [network, coin]);
+
+  const totalAmount = useMemo(() => {
+    const baseTotal = amount * conversionRate;
+    return privateMode ? baseTotal + privateModeFee : baseTotal;
+  }, [amount, conversionRate, privateMode]);
+
+  const handleSwitchChange = (checked: boolean) => {
+    if (checked) {
+      setDialogOpen(true);
+    } else {
+      setPrivateMode(false);
+    }
+  };
+
+  const confirmPrivateMode = () => {
+    setPrivateMode(true);
+    setDialogOpen(false);
+  };
+
+  const cancelPrivateMode = () => {
+    setDialogOpen(false);
+  };
 
   return (
     <div className="max-w-lg mx-auto p-6 mt-12">
       <div className="rounded-2xl bg-[#212529] p-6 text-white border-neutral-500 border">
         <h2 className="text-xl font-bold mb-4">Generate Invoice</h2>
 
-         <p className="text-md font-bold mb-1">Amount</p>
+        {/* Amount Section */}
+        <p className="text-md font-bold mb-1">Amount</p>
         <div className="rounded-lg bg-neutral-700 p-4 mb-6">
           <div className="flex justify-start items-center mb-4">
-            <Select
-              value={network}
-              onValueChange={(value) => setNetwork(value)}
-            >
+            <Select value={network} onValueChange={(value) => setNetwork(value as "starknet" | "ethereum")}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Select Network">
                   <div className="flex items-center gap-2">
@@ -62,17 +105,16 @@ const Home = () => {
           <div className="flex items-center gap-4 mb-2">
             <Input
               placeholder="0"
+              value={amount}
+              onChange={(e) => setAmount(Number(e.target.value))}
               className="flex-1 border-b-2 border-transparent bg-none text-white text-2xl font-bold focus:border-b-white focus:outline-none"
             />
-
-
-            {/* Coin Dropdown */}
-            <Select value={coin} onValueChange={(value) => setCoin(value)}>
+            <Select value={coin} onValueChange={(value) => setCoin(value as "ETH" | "BTC")}>
               <SelectTrigger className="w-[87px] rounded-full">
-                <div className="flex items-center gap-1 ">
+                <div className="flex items-center gap-1">
                   <FaEthereum />
-                   <SelectValue placeholder="Select Coin">{coin}</SelectValue>
-                 </div>
+                  <SelectValue placeholder="Select Coin">{coin}</SelectValue>
+                </div>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ETH">ETH</SelectItem>
@@ -80,85 +122,133 @@ const Home = () => {
               </SelectContent>
             </Select>
           </div>
-
         </div>
-          <p className="text-sm text-neutral-400 -mt-4 mb-4">
-            {coin} {conversionRate}
-          </p>
+        <p className="text-sm text-neutral-400 -mt-4 mb-4">
+          1 {coin} ≈ ${conversionRate.toLocaleString()}
+        </p>
 
+        {/* Other Inputs */}
         <div className="flex flex-col w-full mb-4">
-        <p className="text-lg font-bold mb-1">Payer Email</p>
+          <p className="text-lg font-bold mb-1">Payer Email</p>
           <Input
-          placeholder="Enter recipient's email"
-          className="w-full mb-4 bg-neutral-700 text-md text-white py-5"
-        />
+            placeholder="Enter recipient's email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full mb-4 bg-neutral-700 text-md text-white py-5"
+          />
         </div>
 
         <div className="flex flex-col w-full mb-4">
-        <p className="text-lg font-bold mb-1">Description</p>
+          <p className="text-lg font-bold mb-1">Description</p>
           <Textarea
-          placeholder="Add a description"
-          className="w-full mb-4 bg-neutral-700 text-white"
-        />
+            placeholder="Add a description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full mb-4 bg-neutral-700 text-white"
+          />
         </div>
 
-
-
-        <div className="flex w-full  mb-6 flex-col">
+        <div className="flex w-full mb-6 flex-col">
           <p className="text-lg font-bold mb-1">Due Date(Optional)</p>
-          <Popover  >
-          <PopoverTrigger asChild>
-            <Button
-              variant={"outline"}
-              className={cn(
-                "bg-neutral-700 w-full justify-start text-left font-normal py-5",
-                !date && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon />
-              {date ? format(date, "PPP") : <span>Pick a date</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="center">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              initialFocus
-            />
-          </PopoverContent>
-         </Popover>
-         </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className={cn(
+                  "bg-neutral-700 w-full justify-start text-left font-normal py-5",
+                  !date && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon />
+                {date ? format(date, "PPP") : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="center">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={setDate}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
 
-       
-
-
-        {/* Private Mode Box */}
+        {/* Private Mode Section */}
         <div className="rounded-lg bg-neutral-700 p-4 mb-6 flex justify-between items-start">
           <div className="flex flex-col">
             <h3 className="text-lg font-semibold">Private Mode</h3>
             <p className="text-sm text-neutral-400">
-              Invoice created will only be seen and accessible by only you and payer
+              Invoice created will only be seen and accessible by only you and
+              the payer
             </p>
           </div>
-          <Switch checked={privateMode} onCheckedChange={setPrivateMode} />
+          <Switch
+            checked={privateMode}
+            onCheckedChange={handleSwitchChange}
+          />
         </div>
 
+        {/* Reusable Dialog for Private Mode */}
+        <DialogComponent
+          open={dialogOpen}
+          title="Private Mode"
+          onConfirm={confirmPrivateMode}
+          onCancel={cancelPrivateMode}
+          onOpenChange={setDialogOpen}
+        />
+
         {/* Invoice Summary */}
-        <div className="rounded-lg border border-blue-500 p-4">
-          <h3 className="text-lg font-semibold mb-2">Invoice Summary</h3>
-          <p className="text-sm text-neutral-400 mb-1">Network: {network}</p>
-          <p className="text-sm text-neutral-400 mb-1">Coin: {coin}</p>
-          <p className="text-sm text-neutral-400 mb-1">
-            Conversion Rate: {coin} {conversionRate}
-          </p>
-          <p className="text-sm text-neutral-400 mb-1">
-            Recipient Email: (filled email here)
-          </p>
-          <p className="text-sm text-neutral-400">
-            Private Mode: {privateMode ? "Enabled" : "Disabled"}
-          </p>
+       <div className="rounded-lg border border-blue-500 p-4 mt-6">
+          <h3 className="text-lg font-semibold mb-4">Invoice Summary</h3>
+          <div className="flex justify-between items-center mb-2">
+            <p className="text-sm text-neutral-400">Network:</p>
+            <p className="text-sm text-neutral-300">{network}</p>
+          </div>
+          <div className="flex justify-between items-center mb-2">
+            <p className="text-sm text-neutral-400">Coin:</p>
+            <p className="text-sm text-neutral-300">{coin}</p>
+          </div>
+          <div className="flex justify-between items-center mb-2">
+            <p className="text-sm text-neutral-400">Conversion Rate:</p>
+            <p className="text-sm text-neutral-300">
+              {coin} ≈ ${conversionRate.toLocaleString()}
+            </p>
+          </div>
+          <div className="flex justify-between items-center mb-2">
+            <p className="text-sm text-neutral-400">Recipient Email:</p>
+            <p className="text-sm text-neutral-300">
+              {email || "(not provided)"}
+            </p>
+          </div>
+          <div className="flex flex-col mb-2">
+            <p className="text-sm text-neutral-400">Description:</p>
+            <p className="text-sm text-neutral-300 break-words whitespace-normal">
+              {description || "(not provided)"}
+            </p>
+          </div>
+          <div className="flex justify-between items-center mb-2">
+            <p className="text-sm text-neutral-400">Due Date:</p>
+            <p className="text-sm text-neutral-300">
+              {date ? format(date, "PPP") : "Not set"}
+            </p>
+          </div>
+          <div className="flex justify-between items-center mb-4">
+            <p className="text-sm text-neutral-400">Private Mode:</p>
+            <p className="text-sm text-neutral-300">
+              {privateMode ? "Enabled" : "Disabled"}
+            </p>
+          </div>
+          <div className="border-t border-blue-500 my-4"></div>
+          <div className="flex justify-between items-center">
+            <p className="text-lg font-semibold">Total Amount:</p>
+            <p className="text-lg font-bold text-neutral-100">
+              ${totalAmount.toLocaleString()}
+            </p>
+          </div>
         </div>
+
+        <Button className="w-full mt-6 bg-blue-600 text-white rounded-md py-5">Connect Wallet</Button>
       </div>
     </div>
   );
