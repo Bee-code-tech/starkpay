@@ -26,7 +26,7 @@ const Wallet = ({
 
   return (
     <button
-      className=" flex cursor-pointer items-center gap-4 p-[.7rem] text-start justify-center transition-all hover:rounded-[10px] bg-neutral-600"
+      className=" flex cursor-pointer items-center gap-4 p-[.7rem] text-start justify-center transition-all rounded-[10px] bg-neutral-600 border border-neutral-400 hover:bg-neutral-800"
       onClick={handleConnectWallet}
     >
       <div className="h-[2.2rem] w-[2.2rem] rounded-[5px] ">
