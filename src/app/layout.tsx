@@ -6,6 +6,7 @@ import Image from "next/image";
 import pattern from "@/assets/pattern.png";
 import GridPattern from "@/components/ui/grid-pattern";
 import { cn } from "@/lib/utils";
+import { StarknetProvider } from "@/components/StarknetProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,12 +34,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable}
          antialiased bg-[#343A40]  relative`}
       >
-        <GridPattern
-       
-       
-      />
-        <Navbar />
-        {children}
+        <StarknetProvider>
+         <GridPattern/>
+          <Navbar />
+          {children}
+        </StarknetProvider>
       </body>
     </html>
   );

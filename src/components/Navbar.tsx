@@ -11,9 +11,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { MenuIcon } from "lucide-react";
 import Logo from "./Logo";
+import ConnectButton from "./ConnectButton";
+import { useAccount } from "@starknet-react/core";
+import AddressBar from "./AddressBar";
 
 const Navbar: FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const {address} = useAccount()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,9 +59,16 @@ const Navbar: FC = () => {
 
         {/* Right Section: Connect Button and Menu */}
         <div className="flex items-center space-x-2">
-          <Button variant="outline" className="bg-[#6C757D] text-white">
+          {/* <Button variant="outline" className="bg-[#6C757D] text-white">
             Connect Wallet
-          </Button>
+          </Button> */}
+           {address ? (
+              <div className="flex items-center gap-4">
+                <AddressBar />
+              </div>
+            ) : (
+              <ConnectButton />
+            )}
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger className="cursor-pointer">
