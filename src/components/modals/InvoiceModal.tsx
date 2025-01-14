@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 
 interface InvoiceModalProps {
     open: boolean;
-    email: string;
+  email: string;
+  amount: number;
     description: string;
     date: string;
     onConfirm: () => void;
@@ -19,7 +20,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
     open,
     email,
     description,
-    date,
+  date,
+    amount,
     onConfirm,
 }) => {
   return (
@@ -74,7 +76,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-neutral-400">Invoice Amount:</p>
             <p className="text-sm text-neutral-300 ">
-             $10,000.00
+             {amount}
             </p>
           </div>
           <div className="flex justify-between items-center mb-2">

@@ -28,6 +28,7 @@
     "ethereum-blockies": "^0.1.1",
     "lucide-react": "^0.471.0",
     "next": "15.1.4",
+    "nodemailer": "^6.9.16",
     "react": "^18.3.1",
     "react-blockies": "^1.4.1",
     "react-day-picker": "^8.10.1",
@@ -42,6 +43,7 @@
   "devDependencies": {
     "@types/ethereum-blockies": "^0.1.2",
     "@types/node": "^20",
+    "@types/nodemailer": "^6.4.17",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "postcss": "^8",

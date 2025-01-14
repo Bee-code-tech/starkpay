@@ -41,9 +41,9 @@ const AddressBar = () => {
               />
             ) : (
               <Blockies
-                seed={address.toLowerCase()} // Generate the Blockie based on the address
-                size={8} // Number of squares (8x8)
-                scale={4} // Pixel scaling factor
+                  seed={address.toLowerCase()}
+                  size={8}
+                  scale={4}
                 className="mr-2 h-8 w-8 rounded-full"
               />
             )}
