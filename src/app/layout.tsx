@@ -36,7 +36,6 @@ export default function RootLayout({
       >
         <StarknetProvider>
          <GridPattern/>
-          <Navbar />
           {children}
         </StarknetProvider>
       </body>

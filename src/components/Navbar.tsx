@@ -35,7 +35,7 @@ const Navbar: FC = () => {
       className={`sticky top-0 z-50 border-b ${
         isScrolled
           ? "bg-[#343A40]/80 backdrop-blur-md border-gray-700"
-          : "bg-[#343A40] border-gray-500"
+          : "bg-transparent border-gray-500"
       } transition-all duration-300`}
     >
       <nav className="container mx-auto flex items-center justify-between py-4 px-6">
@@ -48,12 +48,18 @@ const Navbar: FC = () => {
             <Link href="/" className="hover:text-blue-500">
               Generate Invoice
             </Link>
-            <Link href="/history" className="hover:text-blue-500">
+            {
+              address && (
+                <>
+                <Link href="/history" className="hover:text-blue-500">
               Transaction History
             </Link>
             <Link href="/profile" className="hover:text-blue-500">
               Account
             </Link>
+                </>
+              )
+            }
           </div>
         </div>
 
@@ -92,12 +98,13 @@ const Navbar: FC = () => {
                   <Link href="/profile" className="hover:text-blue-500">
                     Account
                   </Link>
-                  <Button
-                    variant="outline"
-                    className="mt-4 w-full bg-[#6C757D] text-white"
-                  >
-                    Connect Wallet
-                  </Button>
+                  {address ? (
+              <div className="flex items-center gap-4">
+                <AddressBar />
+              </div>
+            ) : (
+              <ConnectButton />
+            )}
                 </div>
               </SheetContent>
             </Sheet>

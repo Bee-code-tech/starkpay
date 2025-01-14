@@ -1,17 +1,21 @@
 "use client";
 
 import ProfileIcon from "@/components/icons/ProfileIcon";
+import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useDisconnect } from "@starknet-react/core";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 const Profile = () => {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    
     username: "",
     email: "",
   });
+  const { disconnect } = useDisconnect()
+  const navigate = useRouter()
 
   // Handles input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,31 +27,18 @@ const Profile = () => {
     console.log("Submitting form data:", formData);
     
   };
-
+  const handleDisconnect = () => {
+    disconnect()
+    navigate.push('/')
+    }
+  
   return (
-    <div className="max-w-lg mx-auto px-2 mt-8 mb-12">
+    <section>
+      <Navbar />
+       <div className="max-w-lg mx-auto px-2 mt-8 mb-12">
       <div className="rounded-2xl bg-[#212529] p-4 text-white border-neutral-500 border">
         <h2 className="text-xl font-bold mb-4">Additional Information</h2>
-        <div className="flex flex-col w-full mb-4">
-          <p className="text-lg font-bold mb-1">First Name</p>
-          <Input
-            name="firstName"
-            placeholder="Enter your first name"
-            value={formData.firstName}
-            onChange={handleInputChange}
-            className="w-full mb-4 bg-neutral-700 text-md text-white py-5"
-          />
-        </div>
-        <div className="flex flex-col w-full mb-4">
-          <p className="text-lg font-bold mb-1">Last Name</p>
-          <Input
-            name="lastName"
-            placeholder="Enter your last name"
-            value={formData.lastName}
-            onChange={handleInputChange}
-            className="w-full mb-4 bg-neutral-700 text-md text-white py-5"
-          />
-        </div>
+        
         <div className="flex flex-col w-full mb-4">
           <p className="text-lg font-bold mb-1">Username</p>
           <Input
@@ -91,11 +82,14 @@ const Profile = () => {
             <p className="font-bold text-xl">0x7890...8535jh</p>
           </div>
         </div>
-        <Button className="w-full text-lg mt-4 bg-none text-red-500 rounded-md py-6">
+          <Button
+            onClick={() => handleDisconnect()}
+            className="w-full text-lg mt-4 bg-none text-red-500 rounded-md py-6">
           Disconnect
         </Button>
       </div>
     </div>
+   </section>
   );
 };
 

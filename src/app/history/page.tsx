@@ -4,6 +4,7 @@ import GenerateIcon from "@/components/icons/GenerateIcon";
 import RecieveIcon from "@/components/icons/RecieveIcon";
 import TransactionIcon from "@/components/icons/TransactionIcon";
 import TransactionModal, { Transaction } from "@/components/modals/TransactionModal";
+import Navbar from "@/components/Navbar";
 import React, { useState } from "react";
 
 const transactions: Transaction[] = [
@@ -82,7 +83,9 @@ const HistoryPage = () => {
   });
 
   return (
-    <div className="p-6 mt-6">
+    <section>
+      <Navbar />
+       <div className="p-6 mt-6">
       <div className="rounded-lg border border-neutral-500 p-6 max-w-5xl mx-auto text-white max-h-[695px] overflow-y-auto">
         <h2 className="text-xl font-semibold mb-4">Transaction History</h2>
 
@@ -148,6 +151,7 @@ const HistoryPage = () => {
         onClose={() => setSelectedTransaction(null)}
       />
     </div>
+   </section>
   );
 };
 

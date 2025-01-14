@@ -23,6 +23,8 @@ import { FaEthereum } from "react-icons/fa";
 import { DialogComponent } from "@/components/modals/DialogComponent";
 import MaxIcon from "@/components/icons/MaxIcon";
 import { InvoiceModal } from "@/components/modals/InvoiceModal";
+import Navbar from "@/components/Navbar";
+import { useAccount } from "@starknet-react/core";
 
 const Home = () => {
   const [network, setNetwork] = useState<"starknet" | "ethereum">("starknet");
@@ -35,6 +37,7 @@ const Home = () => {
   const [invoiceOpen, setInvoiceOpen] = useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
   const [description, setDescription] = useState<string>("");
+  const { address } =useAccount()
 
   const privateModeFee = 20.0;
 
@@ -74,7 +77,9 @@ const Home = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto px-2 mt-8 mb-12">
+    <section>
+      <Navbar />
+      <div className="max-w-lg mx-auto px-2 mt-8 mb-12">
       <div className="rounded-2xl bg-[#212529] p-4 text-white border-neutral-500 border">
         <h2 className="text-xl font-bold mb-4">Generate Invoice</h2>
 
@@ -252,7 +257,13 @@ const Home = () => {
           </div>
         </div>
 
-        <Button className="w-full mt-6 bg-blue-600 text-white rounded-md py-5">Connect Wallet</Button>
+          {
+            address ?
+              <>
+                <Button className="w-full mt-6 bg-blue-600 text-white rounded-md py-5">Generate Invoice</Button>
+              </>
+              : <Button className="w-full mt-6 bg-blue-600 text-white rounded-md py-5">Connect Wallet</Button>
+        }
 
 
          <DialogComponent
@@ -271,6 +282,7 @@ const Home = () => {
         />
       </div>
     </div>
+    </section>
   );
 };
 
