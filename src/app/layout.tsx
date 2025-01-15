@@ -3,9 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Image from "next/image";
-import pattern from "@/assets/pattern.png";
 import GridPattern from "@/components/ui/grid-pattern";
-import { cn } from "@/lib/utils";
 import { StarknetProvider } from "@/components/StarknetProvider";
 
 const geistSans = Geist({
