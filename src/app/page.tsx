@@ -25,8 +25,11 @@ import { InvoiceModal } from "@/components/modals/InvoiceModal";
 import Navbar from "@/components/Navbar";
 import { useAccount } from "@starknet-react/core";
 import { DialogComponent } from "@/components/modals/DialogComponent";
-import { readContract } from "@/services/contracts";
+import { readContract, useWriteContract } from "@/services/contracts";
 import { useRouter } from "next/navigation";
+import { GeneratedInvoiceModal } from "@/components/modals/GeneratedInvoiceModal";
+import QRCode from "qrcode";
+import StarkpayLoader from "@/components/StarkpayLoader";
 
 const Home = () => {
   const [network, setNetwork] = useState<"starknet" | "ethereum">("starknet");
@@ -42,6 +45,30 @@ const Home = () => {
   const [data, setData] = useState<any>();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter()
+  const [invoiceUrl, setInvoiceUrl] = useState<string>("");
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
+  const [generate, setGenerate] = useState(false)
+  const { writeContract } = useWriteContract();
+  const [loading, setLoading] = useState(false)
+
+  const generateUniqueId = (): string => {
+    const timestamp = Date.now().toString(36).slice(-4);
+    const randomString = Math.random().toString(36).substring(2, 3).toUpperCase();
+  return `STK-${timestamp}${randomString}`;
+};
+
+  
+  const invoiceId = generateUniqueId();
+
+
+   const generateQRCode = async (url: string) => {
+    try {
+      const qrCode = await QRCode.toDataURL(url, { errorCorrectionLevel: "H" });
+      setQrCodeUrl(qrCode);
+    } catch (error) {
+      console.error("Failed to generate QR Code:", error);
+    }
+  };
   
    useEffect(() => {
    if (address) {
@@ -55,7 +82,7 @@ const Home = () => {
    }
      console.log('data', data); 
      
-  }, [data, address]);
+  }, [address]);
   
 
   const handleSwitchChange = (checked: boolean) => {
@@ -79,29 +106,56 @@ const Home = () => {
     setInvoiceOpen(false);
   };
 
-  const handleSubmit = () => {
+   const handleSubmit = async () => {
     if (!data) {
-      router.push('/profile')
+      router.push("/profile");
       return;
-    } else {
-       const payload = {
-      network,
-      coin,
-      amount,
-      email,
-      description,
-      date: date ? Math.floor(date.getTime() / 1000) : undefined,
-      privateMode,
-      address,
-    };
-       console.log("Invoice Data:", payload);
     }
-   
-   
+
+    try {
+      
+      const baseUrl =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3001"
+    : "https://starkpay.vercel.app"; 
+
+    const constructedUrl = `${baseUrl}/pay?payer=${address}&amount=${amount}&currency=${coin}&private=${privateMode}`;
+    setInvoiceUrl(constructedUrl);
+
+
+      generateQRCode(constructedUrl);
+
+      setLoading(true)
+    
+      const { transactionHash, error } = await writeContract("create_invoice", [
+        invoiceId,
+        amount,
+        coin,
+        description,
+        email,
+        date ? Math.floor(date.getTime() / 1000) : 0,
+        // privateMode,
+      ]);
+
+      if (error) {
+        throw new Error("Failed to generate invoice");
+      }
+
+      setGenerate(true);
+      console.log("Transaction Hash:", transactionHash);
+      
+    } catch (err) {
+      console.error("Error generating invoice:", err);
+      setError("Failed to generate invoice. Please try again.");
+    } finally {
+      setLoading(false)
+    }
   };
 
   return (
     <section>
+      {loading && <StarkpayLoader />}
+      
       <Navbar />
       <div className="max-w-lg mx-auto px-2 mt-8 mb-12">
         <div className="rounded-2xl bg-[#212529] p-4 text-white border-neutral-500 border">
@@ -290,6 +344,7 @@ const Home = () => {
           />
           <InvoiceModal
             open={invoiceOpen}
+            id={invoiceId}
             mode={privateMode}
             amount={amount}
             email={email}
@@ -297,6 +352,15 @@ const Home = () => {
             date={date ? format(date, "PPP") : "Not set"}
             onConfirm={closeInvoice}
           />
+          <GeneratedInvoiceModal
+            qrcode={qrCodeUrl}
+            amount={amount}
+            coin={coin}
+            open={generate}
+            url={invoiceUrl}
+            onOpenChange={setGenerate}
+          />
+           
         </div>
       </div>
     </section>

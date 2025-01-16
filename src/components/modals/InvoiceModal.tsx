@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useAccount } from "@starknet-react/core";
 
 interface InvoiceModalProps {
+  id: string;
     open: boolean;
   email: string;
   amount: number;
@@ -19,7 +20,8 @@ interface InvoiceModalProps {
 }
 
 export const InvoiceModal: React.FC<InvoiceModalProps> = ({
-    open,
+  open,
+  id,
     email,
     description,
   date,
@@ -76,7 +78,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           <div className="flex justify-between items-center mb-2">
             <p className="text-sm text-neutral-400">Invoice ID:</p>
             <p className="text-sm text-neutral-300">
-              #212529
+              {id}
             </p>
           </div>
           <div className="flex items-center justify-between mb-2">

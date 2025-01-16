@@ -1,5 +1,8 @@
+import { sepolia } from '@starknet-react/chains';
 import { RpcProvider, Contract, Account, Abi } from "starknet";
 import { useAccount } from "@starknet-react/core";
+import { useState } from 'react';
+import { set } from 'date-fns';
 
 
 
@@ -47,9 +50,11 @@ export const readContract = async (
 };
 
 export const useWriteContract = () => {
-    const { account } = useAccount();
+  const { account } = useAccount();
+  const [loading, setLoading] =useState(false);
 
   const writeContract = async (method: string, args: any[] = []) => {
+    setLoading(true);
     try {
       if (!account) {
         throw new Error("No wallet connected.");
@@ -70,8 +75,10 @@ export const useWriteContract = () => {
         console.error(`Error writing to contract: ${String(error)}`);
       }
       return { transactionHash: null, error };
+    } finally {
+      setLoading(false);
     }
   };
 
-  return { writeContract };
+  return { writeContract, loading };
 };
