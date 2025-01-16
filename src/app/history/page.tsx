@@ -116,7 +116,7 @@ const HistoryPage = () => {
           {filteredTransactions.map((transaction) => (
             <div
               key={transaction.id}
-              className="flex justify-between items-center rounded-lg bg-[#495057] border border-neutral-300 px-4 py-2"
+              className="flex justify-between items-center rounded-lg bg-neutral-600 border border-neutral-500 px-4 py-2"
             >
               {/* Icon and description */}
               <div className="flex items-center space-x-3">

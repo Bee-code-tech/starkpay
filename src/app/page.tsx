@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -25,10 +25,12 @@ import { InvoiceModal } from "@/components/modals/InvoiceModal";
 import Navbar from "@/components/Navbar";
 import { useAccount } from "@starknet-react/core";
 import { DialogComponent } from "@/components/modals/DialogComponent";
+import { readContract } from "@/services/contracts";
+import { useRouter } from "next/navigation";
 
 const Home = () => {
   const [network, setNetwork] = useState<"starknet" | "ethereum">("starknet");
-  const [coin, setCoin] = useState<"ETH" | "BTC" | "STRK" | "USDC">("ETH");
+  const [coin, setCoin] = useState<"ETH" | "SOL" | "STRK" | "USDC">("ETH");
   const [amount, setAmount] = useState<number>(0);
   const [privateMode, setPrivateMode] = useState<boolean>(false);
   const [date, setDate] = useState<Date | undefined>();
@@ -37,6 +39,24 @@ const Home = () => {
   const [email, setEmail] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const { address } = useAccount();
+  const [data, setData] = useState<any>();
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
+  
+   useEffect(() => {
+   if (address) {
+     const fetchData = async () => {
+      const { data, error } = await readContract("is_exist", [address]);
+      if (error) setError(error.toString());
+      else setData(data);
+    };
+
+    fetchData();
+   }
+     console.log('data', data); 
+     
+  }, [data, address]);
+  
 
   const handleSwitchChange = (checked: boolean) => {
     if (checked) {
@@ -60,7 +80,11 @@ const Home = () => {
   };
 
   const handleSubmit = () => {
-    const payload = {
+    if (!data) {
+      router.push('/profile')
+      return;
+    } else {
+       const payload = {
       network,
       coin,
       amount,
@@ -70,7 +94,10 @@ const Home = () => {
       privateMode,
       address,
     };
-    console.log("Invoice Data:", payload);
+       console.log("Invoice Data:", payload);
+    }
+   
+   
   };
 
   return (
@@ -125,7 +152,7 @@ const Home = () => {
               <Select
                 value={coin}
                 onValueChange={(value) =>
-                  setCoin(value as "ETH" | "BTC" | "STRK" | "USDC")
+                  setCoin(value as "ETH" | "SOL" | "STRK" | "USDC")
                 }
               >
                 <SelectTrigger className="w-[87px] rounded-full">
@@ -133,7 +160,7 @@ const Home = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ETH">ETH</SelectItem>
-                  <SelectItem value="BTC">BTC</SelectItem>
+                  <SelectItem value="SOL">SOL</SelectItem>
                   <SelectItem value="STRK">STRK</SelectItem>
                   <SelectItem value="USDC">USDC</SelectItem>
                 </SelectContent>
@@ -154,7 +181,7 @@ const Home = () => {
 
           <div className="flex flex-col w-full mb-4">
             <p className="text-lg font-bold mb-1">Description</p>
-            <Textarea
+            <Input
               placeholder="Add a description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -218,7 +245,7 @@ const Home = () => {
             </div>
             <div className="flex justify-between items-center mb-2">
               <p className="text-sm text-neutral-400">Amount:</p>
-              <p className="text-sm text-neutral-300">{amount}</p>
+              <p className="text-sm text-neutral-300">$ {amount}</p>
             </div>
             <div className="flex justify-between items-center mb-2">
               <p className="text-sm text-neutral-400">Recipient Email:</p>
@@ -226,7 +253,7 @@ const Home = () => {
                 {email || "(not provided)"}
               </p>
             </div>
-            <div className="flex flex-col mb-2">
+            <div className="flex justify-between items-center mb-2">
               <p className="text-sm text-neutral-400">Description:</p>
               <p className="text-sm text-neutral-300 break-words whitespace-normal">
                 {description || "(not provided)"}
@@ -263,6 +290,7 @@ const Home = () => {
           />
           <InvoiceModal
             open={invoiceOpen}
+            mode={privateMode}
             amount={amount}
             email={email}
             description={description}

@@ -6,12 +6,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useAccount } from "@starknet-react/core";
 
 interface InvoiceModalProps {
     open: boolean;
   email: string;
   amount: number;
-    description: string;
+  description: string;
+  mode?: boolean;
     date: string;
     onConfirm: () => void;
 }
@@ -21,9 +23,11 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
     email,
     description,
   date,
-    amount,
+  amount,
+    mode,
     onConfirm,
 }) => {
+  const {address} = useAccount();
   return (
     <Dialog open={open} onOpenChange={onConfirm}>
       <DialogContent className="max-w-lg ">
@@ -41,7 +45,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
               {email }
             </p>
           </div>
-          <div className="flex flex-col mb-2">
+          <div className="flex justify-between items-center mb-2">
             <p className="text-sm text-neutral-400">Description:</p>
             <p className="text-sm text-neutral-300 break-words whitespace-normal">
               {description}
@@ -58,7 +62,9 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           <div className="flex justify-between items-center">
             <p className="text-sm font-semibold">Payee Wallet Address:</p>
             <p className="text-sm font-bold text-neutral-100">
-              0x653h...73ujd
+                {
+                  address ? address.slice(0, 12).concat("...").concat(address.slice(-5)) : "No wallet connected"
+              }
             </p>
           </div>       
         </div>
@@ -76,25 +82,24 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-neutral-400">Invoice Amount:</p>
             <p className="text-sm text-neutral-300 ">
-             {amount}
+             $ {amount}
             </p>
           </div>
-          <div className="flex justify-between items-center mb-2">
+            {
+              mode && (
+                 <div className="flex justify-between items-center mb-2">
             <p className="text-sm text-neutral-400">Invoice fee:</p>
             <p className="text-sm text-neutral-300">
-              $3.00
+              $.02
             </p>
           </div>
-          <div className="flex justify-between items-center mb-2">
-            <p className="text-sm text-neutral-400">Gas fee:</p>
-            <p className="text-sm text-neutral-300">
-              $1.00
-            </p>
-          </div>
+              )
+         }
+         
           <div className="flex justify-between items-center mb-2">
             <p className="text-sm text-neutral-400">Private mode:</p>
             <p className="text-sm text-neutral-300">
-              $0.12
+              {mode ? "On" : "Off"}
             </p>
           </div>
           
@@ -102,7 +107,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           <div className="flex justify-between items-center">
             <p className="text-sm font-semibold">Total Amount:</p>
             <p className="text-sm font-bold text-neutral-100">
-              $10,000.00
+              ${amount + (mode ? 0.02 : 0)}
             </p>
           </div>       
         </div>
