@@ -4,7 +4,7 @@ import nodemailer from "nodemailer";
 type EmailPayload = {
   to: string;
   subject: string;
-  template: "welcome" | "resetPassword";
+  template: "welcome" | "payment";
   variables: Record<string, any>;
 };
 
@@ -13,11 +13,14 @@ const templates: Record<EmailPayload["template"], (vars: Record<string, any>) =>
   welcome: (vars) => `
     <h1>Welcome, ${vars.name}!</h1>
     <p>Thank you for joining us. We're excited to have you on board.</p>
+    <p>Team Starkpay.</p>
   `,
-  resetPassword: (vars) => `
-    <h1>Password Reset Request</h1>
-    <p>Hello, ${vars.name}. Click the link below to reset your password:</p>
-    <a href="${vars.resetLink}">Reset Password</a>
+  payment: (vars) => `
+    <h1>Payment Request</h1>
+    <p>Hello there,</p>
+    <p>${vars.username} has generated an invoice for you to send <strong>${vars.amount} ${vars.coin}</strong> to their wallet.</p>
+    <p>Click <a href="${vars.transactionLink}" target="_blank">here</a> to confirm the transaction.</p>
+     <p>Team Starkpay.</p>
   `,
 };
 

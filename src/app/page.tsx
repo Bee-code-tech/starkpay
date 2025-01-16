@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, CheckCircle, XCircle } from "lucide-react";
 import { Popover, PopoverContent } from "@/components/ui/popover";
 import { PopoverTrigger } from "@radix-ui/react-popover";
 import { cn } from "@/lib/utils";
@@ -50,13 +50,52 @@ const Home = () => {
   const [generate, setGenerate] = useState(false)
   const { writeContract } = useWriteContract();
   const [loading, setLoading] = useState(false)
+  const [isEmailValid, setIsEmailValid] = useState<boolean | null>(null);
+  const [validationMessage, setValidationMessage] = useState<string>("");
 
   const generateUniqueId = (): string => {
     const timestamp = Date.now().toString(36).slice(-4);
     const randomString = Math.random().toString(36).substring(2, 3).toUpperCase();
   return `STK-${timestamp}${randomString}`;
-};
+  };
+  
+  const validateEmail = async (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setIsEmailValid(false);
+      setValidationMessage("Invalid email format.");
+      return;
+    }
 
+    try {
+      const response = await fetch(`/api/verify-email?email=${email}`);
+      const result = await response.json();
+
+      if (result.isValid) {
+        setIsEmailValid(true);
+        setValidationMessage("Email is verified.");
+      } else {
+        setIsEmailValid(false);
+        setValidationMessage("Email does not exist.");
+      }
+    } catch (error) {
+      console.error("Email validation error:", error);
+      setIsEmailValid(false);
+      setValidationMessage("Failed to validate email.");
+    }
+  };
+
+   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputEmail = e.target.value;
+    setEmail(inputEmail);
+
+    if (inputEmail) {
+      validateEmail(inputEmail);
+    } else {
+      setIsEmailValid(null);
+      setValidationMessage("");
+    }
+  };
   
   const invoiceId = generateUniqueId();
 
@@ -82,7 +121,7 @@ const Home = () => {
    }
      console.log('data', data); 
      
-  }, [address]);
+  }, [address, data]);
   
 
   const handleSwitchChange = (checked: boolean) => {
@@ -106,57 +145,75 @@ const Home = () => {
     setInvoiceOpen(false);
   };
 
-   const handleSubmit = async () => {
-    if (!data) {
-      router.push("/profile");
-      return;
+ const handleSubmit = async () => {
+  if (!data) {
+    router.push("/profile");
+    return;
+  }
+
+  try {
+    const baseUrl =
+      process.env.NODE_ENV === "development"
+        ? "http://localhost:3001"
+        : "https://starkpay.vercel.app";
+
+        const constructedUrl = `${baseUrl}/invoice?payee=${address}&amount=${amount}&currency=${coin}&private=${privateMode}`;
+        setInvoiceUrl(constructedUrl);
+
+        generateQRCode(constructedUrl);
+
+        setLoading(true);
+
+  
+    const { transactionHash, error } = await writeContract("create_invoice", [
+      invoiceId,
+      amount,
+      coin,
+      description,
+      email,
+      date ? Math.floor(date.getTime() / 1000) : 0,
+    ]);
+
+    if (error) {
+      throw new Error("Failed to generate invoice");
     }
 
-    try {
-      
-      const baseUrl =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:3001"
-    : "https://starkpay.vercel.app"; 
+    console.log("Transaction Hash:", transactionHash);
 
-    const constructedUrl = `${baseUrl}/pay?payer=${address}&amount=${amount}&currency=${coin}&private=${privateMode}`;
-    setInvoiceUrl(constructedUrl);
+     fetch("/api/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        to: email,
+        subject: "Payment Request from Starkpay",
+        template: "payment",
+        variables: {
+          username: "StarkPay User",
+          amount: amount,
+          coin,
+          transactionLink: constructedUrl,
+        },
+      }),
+    });
+
+    setGenerate(true);
+  } catch (err) {
+    console.error("Error generating invoice:", err);
+    setError("Failed to generate invoice. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
 
-      generateQRCode(constructedUrl);
-
-      setLoading(true)
-    
-      const { transactionHash, error } = await writeContract("create_invoice", [
-        invoiceId,
-        amount,
-        coin,
-        description,
-        email,
-        date ? Math.floor(date.getTime() / 1000) : 0,
-        // privateMode,
-      ]);
-
-      if (error) {
-        throw new Error("Failed to generate invoice");
-      }
-
-      setGenerate(true);
-      console.log("Transaction Hash:", transactionHash);
-      
-    } catch (err) {
-      console.error("Error generating invoice:", err);
-      setError("Failed to generate invoice. Please try again.");
-    } finally {
-      setLoading(false)
-    }
-  };
 
   return (
     <section>
-      {loading && <StarkpayLoader />}
       
       <Navbar />
+      {loading && <StarkpayLoader />}
       <div className="max-w-lg mx-auto px-2 mt-8 mb-12">
         <div className="rounded-2xl bg-[#212529] p-4 text-white border-neutral-500 border">
           <h2 className="text-xl font-bold mb-4">Generate Invoice</h2>
@@ -228,9 +285,21 @@ const Home = () => {
             <Input
               placeholder="Enter recipient's email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
               className="w-full mb-4 bg-neutral-700 text-md text-white py-5"
             />
+              {isEmailValid === true && (
+                <div className="flex items-center text-green-500 text-sm ">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  <span>{validationMessage}</span>
+                </div>
+              )}
+              {isEmailValid === false && (
+                <div className="flex items-center text-red-500 text-sm ">
+                  <XCircle className="w-3 h-3 mr-1" />
+                  <span>{validationMessage}</span>
+                </div>
+              )}
           </div>
 
           <div className="flex flex-col w-full mb-4">
