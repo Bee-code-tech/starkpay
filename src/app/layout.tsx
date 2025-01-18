@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import GridPattern from "@/components/ui/grid-pattern";
 import { StarknetProvider } from "@/components/StarknetProvider";
+import WalletStatusBar from "@/components/WalletStatusBar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,6 +34,7 @@ export default function RootLayout({
         <StarknetProvider>
          <GridPattern/>
           {children}
+          <WalletStatusBar />
         </StarknetProvider>
       </body>
     </html>

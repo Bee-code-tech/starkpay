@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Blockies from "react-blockies";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import Navbar from "@/components/Navbar";
 import StarkpayLoader from "@/components/StarkpayLoader";
 import { decodeUser } from "@/lib/utils";
@@ -51,7 +51,6 @@ const Profile = () => {
             username: formattedData.username || "",
             email: formattedData.email || "",
           });
-          toast.success("Profile data fetched successfully!");
         } else {
           toast.error("Invalid profile data format!");
         }
@@ -227,7 +226,7 @@ const sendEmail = async (
     <section>
       <Navbar />
       {loading && <StarkpayLoader />}
-      <Toaster position="top-right" reverseOrder={false} />
+     
       <div className="max-w-lg mx-auto px-2 mt-8 mb-12">
         <div className="rounded-2xl bg-[#212529] p-4 text-white border-neutral-500 border">
           <h2 className="text-xl font-bold mb-4">Additional Information</h2>

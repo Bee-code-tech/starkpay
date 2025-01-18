@@ -16,7 +16,6 @@ const templates: Record<EmailPayload["template"], (vars: Record<string, any>) =>
     <p>Team Starkpay.</p>
   `,
   payment: (vars) => `
-    <h1>Payment Request</h1>
     <p>Hello there,</p>
     <p>${vars.username} has generated an invoice for you to send <strong>${vars.amount} ${vars.coin}</strong> to their wallet.</p>
     <p>Click <a href="${vars.transactionLink}" target="_blank">here</a> to confirm the transaction.</p>

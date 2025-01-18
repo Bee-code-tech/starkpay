@@ -30,6 +30,7 @@ import { useRouter } from "next/navigation";
 import { GeneratedInvoiceModal } from "@/components/modals/GeneratedInvoiceModal";
 import QRCode from "qrcode";
 import StarkpayLoader from "@/components/StarkpayLoader";
+import toast from "react-hot-toast";
 
 const Home = () => {
   const [network, setNetwork] = useState<"starknet" | "ethereum">("starknet");
@@ -52,6 +53,7 @@ const Home = () => {
   const [loading, setLoading] = useState(false)
   const [isEmailValid, setIsEmailValid] = useState<boolean | null>(null);
   const [validationMessage, setValidationMessage] = useState<string>("");
+  const [exist, setExist] = useState(false)
 
   const generateUniqueId = (): string => {
     const timestamp = Date.now().toString(36).slice(-4);
@@ -112,16 +114,47 @@ const Home = () => {
    useEffect(() => {
    if (address) {
      const fetchData = async () => {
+      const { data, error } = await readContract("is_exist", [address]);
+       if (data) {
+         setExist(true)
+       } 
+     };
+     const fetchUser = async () => {
       const { data, error } = await readContract("get_user", [address]);
-      if (error) setError(error.toString());
-      else setData(data);
-    };
-
+       if (
+        typeof data === "object" &&
+        data !== null &&
+        "email" in data &&
+        "username" in data &&
+        "address" in data &&
+        "registered_at" in data &&
+        typeof data.email === "bigint" &&
+        typeof data.username === "bigint" &&
+        typeof data.address === "bigint" &&
+        typeof data.registered_at === "bigint"
+      ) {
+        const formattedData = decodeUser(data as {
+          email: bigint;
+          username: bigint;
+          address: bigint;
+          registered_at: bigint;
+        });
+         setData(formattedData)
+        console.log("Decoded user data:", formattedData);
+      } else {
+        console.error("Invalid data structure:", data);
+      }
+     };
+     
+    fetchUser()
     fetchData();
    }
-     console.log('data', data); 
      
    }, [address]);
+  
+  console.log('is exsi', exist);
+  console.log('data', data);
+  
   
 
 
@@ -150,10 +183,11 @@ const Home = () => {
   };
 
  const handleSubmit = async () => {
-  if (!data) {
+  if (!exist) {
     router.push("/profile");
     return;
-  }
+  } 
+   
 
   try {
     const baseUrl =
@@ -183,6 +217,7 @@ const Home = () => {
     }
 
     console.log("Transaction Hash:", transactionHash);
+    toast.success('Invoice Generated Successfully')
 
      fetch("/api/send", {
       method: "POST",
@@ -194,7 +229,7 @@ const Home = () => {
         subject: "Payment Request from Starkpay",
         template: "payment",
         variables: {
-          username: "StarkPay User",
+          username: data?.username,
           amount: amount,
           coin,
           transactionLink: constructedUrl,
