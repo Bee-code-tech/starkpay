@@ -4,7 +4,7 @@ import nodemailer from "nodemailer";
 type EmailPayload = {
   to: string;
   subject: string;
-  template: "welcome" | "payment";
+  template: "welcome" | "payment" | "profile";
   variables: Record<string, any>;
 };
 
@@ -20,7 +20,12 @@ const templates: Record<EmailPayload["template"], (vars: Record<string, any>) =>
     <p>Hello there,</p>
     <p>${vars.username} has generated an invoice for you to send <strong>${vars.amount} ${vars.coin}</strong> to their wallet.</p>
     <p>Click <a href="${vars.transactionLink}" target="_blank">here</a> to confirm the transaction.</p>
-     <p>Team Starkpay.</p>
+    <p>Team Starkpay.</p>
+  `,
+  profile: (vars) => `
+    <p>Hello ${vars.name},</p>
+    <p>Your Starkpay profile has been successfully updated. If you didn't make this change, please contact support immediately.</p>
+    <p>Team Starkpay.</p>
   `,
 };
 

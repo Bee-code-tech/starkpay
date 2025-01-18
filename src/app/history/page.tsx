@@ -5,7 +5,10 @@ import RecieveIcon from "@/components/icons/RecieveIcon";
 import TransactionIcon from "@/components/icons/TransactionIcon";
 import TransactionModal, { Transaction } from "@/components/modals/TransactionModal";
 import Navbar from "@/components/Navbar";
-import React, { useState } from "react";
+import { decodeInvoices } from "@/lib/utils";
+import { readContract } from "@/services/contracts";
+import { useAccount } from "@starknet-react/core";
+import React, { useEffect, useState } from "react";
 
 const transactions: Transaction[] = [
   {
@@ -73,9 +76,31 @@ const transactions: Transaction[] = [
   },
 ];
 
+
+
 const HistoryPage = () => {
   const [activeTab, setActiveTab] = useState<"all" | "generated" | "received">("all");
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const { address } = useAccount()
+  const [data, setData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+   if (address) {
+     const fetchData = async () => {
+      const { data, error } = await readContract("get_init", [address]);
+      if (error) setError(error.toString());
+      else setData(data);
+    };
+
+    fetchData();
+   }
+     console.log('data', data); 
+     
+  }, [address]);
+  
+  console.log('invoices', decodeInvoices(data));
+  
 
   const filteredTransactions = transactions.filter((transaction) => {
     if (activeTab === "all") return true;

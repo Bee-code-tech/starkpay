@@ -13,7 +13,7 @@ const provider = new RpcProvider({
 });
 
 
-const CONTRACT_ADDRESS = "0x0656a4f76d28aed8bc1543e3a06017d045e41556fc52803e7e2e3ede067e0549";
+const CONTRACT_ADDRESS = "0x00ad671719dd9c4f094c8efccecc3794ae0bd81c6a9ff2560cd02748ab492f0d";
 
 export const getContract = async (): Promise<Contract> => {
   try {

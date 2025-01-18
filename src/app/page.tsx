@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { CalendarIcon, CheckCircle, XCircle } from "lucide-react";
 import { Popover, PopoverContent } from "@/components/ui/popover";
 import { PopoverTrigger } from "@radix-ui/react-popover";
-import { cn } from "@/lib/utils";
+import { cn, decodeUser } from "@/lib/utils";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import StarkIcon from "@/components/icons/StarkIcon";
@@ -112,7 +112,7 @@ const Home = () => {
    useEffect(() => {
    if (address) {
      const fetchData = async () => {
-      const { data, error } = await readContract("is_exist", [address]);
+      const { data, error } = await readContract("get_user", [address]);
       if (error) setError(error.toString());
       else setData(data);
     };
@@ -121,7 +121,11 @@ const Home = () => {
    }
      console.log('data', data); 
      
-  }, [address, data]);
+   }, [address]);
+  
+
+
+  
   
 
   const handleSwitchChange = (checked: boolean) => {
