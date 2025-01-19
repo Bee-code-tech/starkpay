@@ -43,8 +43,8 @@ export const decodeInvoices = (invoices: any[]) => {
     currency: decodeCurrency(invoice.currency),
     dueDate: decodeUnixTimestamp(invoice.due_date),
     generatedAt: decodeUnixTimestamp(invoice.generated_at),
-    status: decodeInvoiceStatus(invoice.invoice_status),
-    rivacy: decodePrivacy(invoice.privacy),
+    status: decodeStatus(invoice.invoice_status),
+    privacy: decodePrivacy(invoice.privacy),
   }));
 };
 
@@ -68,12 +68,21 @@ const decodeCurrency = (currencyBigInt: bigint): string => {
   return text.trim();
 };
 
-export const decodeInvoiceStatus = (value: bigint) => {
-  const statusMap: Record<string, string> = {
-    "5642821355880663364": "NOT PAID",
-    "5642821355880663365": "PAID",
-  };
-  return statusMap[value.toString()] || "UNKNOWN";
+export const decodeStatus = (bigIntValue: bigint): string => {
+  if (!bigIntValue) return "";
+
+  const hex = bigIntValue.toString(16);
+
+  let decodedString = "";
+
+  for (let i = 0; i < hex.length; i += 2) {
+    const charCode = parseInt(hex.slice(i, i + 2), 16);
+    if (charCode) {
+      decodedString += String.fromCharCode(charCode);
+    }
+  }
+
+  return decodedString;
 };
 
 export const decodePrivacy = (value: bigint) => {

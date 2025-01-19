@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAccount } from "@starknet-react/core";
-import {  useWriteContract } from "@/services/contracts";
+import {  usePayETH, usePaySTRK, useWriteContract } from "@/services/contracts";
 import { useRouter } from "next/navigation";
 import StarkpayLoader from "@/components/StarkpayLoader";
 import { format } from "date-fns";
@@ -21,59 +21,85 @@ const Invoice = () => {
   const [data, setData] = useState<any>();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter()
-  const { writeContract } = useWriteContract();
+  const { paySTRK } = usePaySTRK();
+  const {payETH} = usePayETH()
   const [loading, setLoading] = useState(false)
   
 
  const handleSubmit = async () => {
-  if (!data) {
-    router.push("/profile");
-    return;
-  }
+ 
 
   try {
-    const baseUrl =
-      process.env.NODE_ENV === "development"
-        ? "http://localhost:3001"
-        : "https://starkpay.vercel.app";
 
-        const constructedUrl = `${baseUrl}/invoice?payee=${address}&amount=${amount}&currency=${coin}&private=${privateMode}`;
+    setLoading(true);
+    
+  //   const paySTRKArgs = [
+  //     "0x034fb097d6c71b417914d0f5be0388a19fd1ce61645c9ba7853aa982a4036b84",
+  //     "20000000",
+  // ];
+
+  //   const confirmArgs = [
+  //     "0x70fdef0b89b2f4c5a2dec9641285b0f69ee36ead6c7099d629edf34afef5ec9",
+  //     "doctorbee64@gmail.com",
+  //     "STK-76t2Z",
+  //   ];
+
+  //   const { transactionHash, error } = await paySTRK(
+  //     "transfer",
+  //     paySTRKArgs,
+  //     "confirm_payment",
+  //     confirmArgs
+  //   );
+
+  //     if (error) {
+  //       console.error("Payment failed:", error);
+  //     } else {
+  //       console.log("Payment successful:", transactionHash);
+    //     }
+    
 
 
-        setLoading(true);
+      const payETHArgs = [
+      "0x034fb097d6c71b417914d0f5be0388a19fd1ce61645c9ba7853aa982a4036b84",
+      "20000000",
+  ];
 
-  
-    const { transactionHash, error } = await writeContract("create_invoice", [
-      amount,
-      coin,
-      description,
-      email,
-      date ? Math.floor(date.getTime() / 1000) : 0,
-    ]);
+    const confirmArgs = [
+      "0x70fdef0b89b2f4c5a2dec9641285b0f69ee36ead6c7099d629edf34afef5ec9",
+      "doctorbee64@gmail.com",
+      "STK-gxrq9",
+    ];
 
-    if (error) {
-      throw new Error("Failed to generate invoice");
-    }
+    const { transactionHash, error } = await payETH(
+      "transfer",
+      payETHArgs,
+      "confirm_payment",
+      confirmArgs
+    );
 
-    console.log("Transaction Hash:", transactionHash);
-
-     fetch("/api/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        to: email,
-        subject: "Payment Request from Starkpay",
-        template: "payment",
-        variables: {
-          username: "StarkPay User",
-          amount: amount,
-          coin,
-          transactionLink: constructedUrl,
-        },
-      }),
-    });
+      if (error) {
+        console.error("Payment failed:", error);
+      } else {
+        console.log("Payment successful:", transactionHash);
+      }
+   
+    //  fetch("/api/send", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify({
+    //     to: email,
+    //     subject: "Payment Request from Starkpay",
+    //     template: "payment",
+    //     variables: {
+    //       username: "StarkPay User",
+    //       amount: amount,
+    //       coin,
+    //       transactionLink: constructedUrl,
+    //     },
+    //   }),
+    // });
 
   } catch (err) {
     console.error("Error generating invoice:", err);
@@ -200,7 +226,7 @@ const Invoice = () => {
             onClick={handleSubmit}
             disabled={!address}
           >
-            Generate Invoice
+            Send
           </Button>
 
            
