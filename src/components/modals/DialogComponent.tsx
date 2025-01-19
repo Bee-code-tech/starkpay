@@ -14,6 +14,7 @@ interface DialogComponentProps {
   title: string;
   confirmText?: string;
   cancelText?: string;
+  coin: string;
   onConfirm: () => void;
   onCancel: () => void;
   onOpenChange: (open: boolean) => void;
@@ -22,6 +23,7 @@ interface DialogComponentProps {
 export const DialogComponent: React.FC<DialogComponentProps> = ({
   open,
   title,
+  coin,
   confirmText = "Continue",
   cancelText = "Turn Off",
   onConfirm,
@@ -41,7 +43,7 @@ export const DialogComponent: React.FC<DialogComponentProps> = ({
                 </div>
                   <h2 className="text-lg font-bold">Private Mode</h2>
                   <p className="text-center font-thin">This will make your transaction encrypted, attracts extra fee of </p>
-                  <h3 className="text-md font-bold">$0.02</h3>
+          <h3 className="text-md font-bold">0.02 {coin}</h3>
               </div>
           
             <Button onClick={onConfirm} className="py-5 text-md">

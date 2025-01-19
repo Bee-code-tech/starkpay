@@ -4,15 +4,15 @@ import { useAccount } from "@starknet-react/core";
 import { useState } from 'react';
 
 const myNodeUrl = 'https://starknet-sepolia.infura.io/v3/7deb84b6f21441949768e183d36321c0';
-const CONTRACT_ADDRESS = "0x00ad671719dd9c4f094c8efccecc3794ae0bd81c6a9ff2560cd02748ab492f0d";
-const ETH_CONTRACT_ADDRESS = '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7';
-const STRK_CONTRACT_ADDRESS = '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d'
-const PRIVATE_KEY = "0x0111cf424c8f1615a65f4e4d9ae2d3f1ed97a9931cf2fb9f04274538ad7b404f";
-const ACCOUNT_ADDRESS = "0x070fdef0b89b2f4c5a2dec9641285b0f69ee36ead6c7099d629edf34afef5ec9";
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '';
+const ETH_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_ETH_CONTRACT_ADDRESS || '';
+const STRK_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_STRK_CONTRACT_ADDRESS || '';
+const PRIVATE_KEY = process.env.NEXT_PUBLIC_PRIVATE_KEY || '';
+const ACCOUNT_ADDRESS = process.env.NEXT_PUBLIC_ACCOUNT_ADDRESS || '';
 
-export const provider = new RpcProvider({
-  nodeUrl: myNodeUrl,
-});
+
+
+export const provider = new RpcProvider({ nodeUrl: myNodeUrl });
 
 export const getContract = async (): Promise<Contract> => {
   try {

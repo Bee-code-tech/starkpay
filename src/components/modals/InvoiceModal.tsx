@@ -13,6 +13,7 @@ interface InvoiceModalProps {
     open: boolean;
   email: string;
   amount: string;
+  coin: string;
   description: string;
   mode?: boolean;
     date: string;
@@ -26,6 +27,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
     description,
   date,
   amount,
+  coin,
     mode,
     onConfirm,
 }) => {
@@ -92,7 +94,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                  <div className="flex justify-between items-center mb-2">
             <p className="text-sm text-neutral-400">Invoice fee:</p>
             <p className="text-sm text-neutral-300">
-              $.02
+              0.02 {coin}
             </p>
           </div>
               )
@@ -109,9 +111,10 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           <div className="flex justify-between items-center">
             <p className="text-sm font-semibold">Total Amount:</p>
             <p className="text-sm font-bold text-neutral-100">
-              ${amount + (mode ? 0.02 : 0)}
+              {`${mode ? (parseFloat(amount) + 0.02).toFixed(2) : parseFloat(amount).toFixed(2)} ${coin}`}
             </p>
-          </div>       
+          </div>
+       
         </div>
         </div>
           

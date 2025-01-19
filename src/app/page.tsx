@@ -435,6 +435,7 @@ const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
           <DialogComponent
             open={dialogOpen}
+            coin={coin}
             title="Private Mode"
             onConfirm={confirmPrivateMode}
             onCancel={cancelPrivateMode}
@@ -443,6 +444,7 @@ const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           <InvoiceModal
             open={invoiceOpen}
             id={invoiceId}
+            coin={coin}
             mode={privateMode}
             amount={amount || ""}
             email={email}
