@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { getSTRKContract } from "@/services/contracts";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -92,3 +93,7 @@ export const decodePrivacy = (value: bigint) => {
   };
   return privacyMap[value.toString()] || "UNKNOWN";
 };
+
+
+
+

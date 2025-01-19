@@ -12,7 +12,7 @@ interface InvoiceModalProps {
   id: string;
     open: boolean;
   email: string;
-  amount: number;
+  amount: string;
   description: string;
   mode?: boolean;
     date: string;

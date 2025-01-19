@@ -8,15 +8,26 @@ const validateEmailSyntax = (email: string): boolean => {
 
 const checkDomainExists = (domain: string): Promise<boolean> => {
   return new Promise((resolve) => {
-    dns.resolveMx(domain, (error, addresses) => {
-      if (error || addresses.length === 0) {
-        resolve(false);
+    dns.resolveMx(domain, (mxError, mxAddresses) => {
+      console.log("MX Lookup:", { mxError, mxAddresses });
+
+      if (mxError || mxAddresses.length === 0) {
+        dns.resolve(domain, (aError, aAddresses) => {
+          console.log("A Record Lookup:", { aError, aAddresses });
+
+          if (aError || aAddresses.length === 0) {
+            resolve(false);
+          } else {
+            resolve(true);
+          }
+        });
       } else {
         resolve(true);
       }
     });
   });
 };
+
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== "GET") {
@@ -30,13 +41,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    // Step 1: Validate the email syntax
     const isValidSyntax = validateEmailSyntax(email);
     if (!isValidSyntax) {
       return res.status(400).json({ isValid: false, reason: "Invalid email syntax" });
     }
 
-    // Step 2: Extract the domain and check if it exists
     const domain = email.split("@")[1];
     const domainExists = await checkDomainExists(domain);
 

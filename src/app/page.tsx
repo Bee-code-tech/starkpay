@@ -35,7 +35,7 @@ import toast from "react-hot-toast";
 const Home = () => {
   const [network, setNetwork] = useState<"starknet" | "ethereum">("starknet");
   const [coin, setCoin] = useState<"ETH" | "SOL" | "STRK" | "USDC">("ETH");
-  const [amount, setAmount] = useState<number>(0);
+  const [amount, setAmount] = useState<string>();
   const [privateMode, setPrivateMode] = useState<boolean>(false);
   const [date, setDate] = useState<Date | undefined>();
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
@@ -61,43 +61,30 @@ const Home = () => {
   return `STK-${timestamp}${randomString}`;
   };
   
-  const validateEmail = async (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setIsEmailValid(false);
-      setValidationMessage("Invalid email format.");
-      return;
-    }
+ const validateEmail = (email: string) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    try {
-      const response = await fetch(`/api/verify-email?email=${email}`);
-      const result = await response.json();
+  if (!email) {
+    setIsEmailValid(null);
+    setValidationMessage("");
+    return;
+  }
 
-      if (result.isValid) {
-        setIsEmailValid(true);
-        setValidationMessage("Email is verified.");
-      } else {
-        setIsEmailValid(false);
-        setValidationMessage("Email does not exist.");
-      }
-    } catch (error) {
-      console.error("Email validation error:", error);
-      setIsEmailValid(false);
-      setValidationMessage("Failed to validate email.");
-    }
-  };
+  if (!emailRegex.test(email)) {
+    setIsEmailValid(false);
+    setValidationMessage("Invalid email format.");
+  } else {
+    setIsEmailValid(true);
+    setValidationMessage("Email format is valid.");
+  }
+};
 
-   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputEmail = e.target.value;
-    setEmail(inputEmail);
+const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const inputEmail = e.target.value;
+  setEmail(inputEmail);
 
-    if (inputEmail) {
-      validateEmail(inputEmail);
-    } else {
-      setIsEmailValid(null);
-      setValidationMessage("");
-    }
-  };
+  validateEmail(inputEmail);
+};
   
   const invoiceId = generateUniqueId();
 
@@ -186,16 +173,19 @@ const Home = () => {
   if (!exist) {
     router.push("/profile");
     return;
-  } 
+   } 
+   
+   console.log('amount', amount);
+   
    
 
   try {
     const baseUrl =
       process.env.NODE_ENV === "development"
-        ? "http://localhost:3001"
+        ? "http://localhost:3000"
         : "https://starkpay.vercel.app";
 
-        const constructedUrl = `${baseUrl}/invoice?payee=${address}&amount=${amount}&currency=${coin}&private=${privateMode}`;
+        const constructedUrl = `${baseUrl}/invoice?payee=${address}&amount=${amount}&currency=${coin}&private=${privateMode}&id=${invoiceId}&description=${description}&date=${ date ? Math.floor(date.getTime() / 1000) : 0}&email=${email}`;
         setInvoiceUrl(constructedUrl);
 
         generateQRCode(constructedUrl);
@@ -294,9 +284,9 @@ const Home = () => {
 
             <div className="flex items-center gap-4 mb-2">
               <Input
-                placeholder="0"
+                placeholder="1 ETH"
                 value={amount}
-                onChange={(e) => setAmount(Number(e.target.value))}
+                onChange={(e) => setAmount(e.target.value)}
                 className="flex-1 border-b-2 border-transparent bg-none text-white text-2xl font-bold focus:border-b-white focus:outline-none"
               />
               <Select
@@ -407,7 +397,7 @@ const Home = () => {
             </div>
             <div className="flex justify-between items-center mb-2">
               <p className="text-sm text-neutral-400">Amount:</p>
-              <p className="text-sm text-neutral-300">$ {amount}</p>
+              <p className="text-sm text-neutral-300"> {amount}</p>
             </div>
             <div className="flex justify-between items-center mb-2">
               <p className="text-sm text-neutral-400">Recipient Email:</p>
@@ -454,7 +444,7 @@ const Home = () => {
             open={invoiceOpen}
             id={invoiceId}
             mode={privateMode}
-            amount={amount}
+            amount={amount || ""}
             email={email}
             description={description}
             date={date ? format(date, "PPP") : "Not set"}
@@ -462,7 +452,7 @@ const Home = () => {
           />
           <GeneratedInvoiceModal
             qrcode={qrCodeUrl}
-            amount={amount}
+            amount={amount || ''}
             coin={coin}
             open={generate}
             url={invoiceUrl}

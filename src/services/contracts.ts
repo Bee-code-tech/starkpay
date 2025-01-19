@@ -1,3 +1,4 @@
+'use client'
 import { RpcProvider, Contract, Account, Abi } from "starknet";
 import { useAccount } from "@starknet-react/core";
 import { useState } from 'react';
@@ -9,7 +10,7 @@ const STRK_CONTRACT_ADDRESS = '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab0
 const PRIVATE_KEY = "0x0111cf424c8f1615a65f4e4d9ae2d3f1ed97a9931cf2fb9f04274538ad7b404f";
 const ACCOUNT_ADDRESS = "0x070fdef0b89b2f4c5a2dec9641285b0f69ee36ead6c7099d629edf34afef5ec9";
 
-const provider = new RpcProvider({
+export const provider = new RpcProvider({
   nodeUrl: myNodeUrl,
 });
 
@@ -73,6 +74,46 @@ export const readContract = async (
     return { data: null, error };
   }
 };
+
+export const readETHBalance = async (
+  method: string,
+  args: any[] = []
+) => {
+  try {
+    const contract = await getETHContract();
+    const result = await contract.call(method, args);
+    
+    return { data: result, error: null };
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error reading contract: ${error.message}`);
+    } else {
+      console.error(`Error reading contract: ${String(error)}`);
+    }
+    return { data: null, error };
+  }
+};
+
+export const readSTRKBalance = async (
+  method: string,
+  args: any[] = []
+) => {
+  try {
+    const contract = await getSTRKContract();
+    const result = await contract.call(method, args);
+    
+    return { data: result, error: null };
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error reading contract: ${error.message}`);
+    } else {
+      console.error(`Error reading contract: ${String(error)}`);
+    }
+    return { data: null, error };
+  }
+};
+
+
 
 export const useWriteContract = () => {
   const { account } = useAccount();

@@ -4,7 +4,7 @@ import nodemailer from "nodemailer";
 type EmailPayload = {
   to: string;
   subject: string;
-  template: "welcome" | "payment" | "profile";
+  template: "welcome" | "payment" | "profile" | "confirm";
   variables: Record<string, any>;
 };
 
@@ -24,6 +24,16 @@ const templates: Record<EmailPayload["template"], (vars: Record<string, any>) =>
   profile: (vars) => `
     <p>Hello ${vars.name},</p>
     <p>Your Starkpay profile has been successfully updated. If you didn't make this change, please contact support immediately.</p>
+    <p>Team Starkpay.</p>
+  `,
+  confirm: (vars) => `
+    <p>Bm ${vars.name},</p>
+    <p>We are pleased to inform you that the payment of <strong>${vars.amount} ${vars.coin}</strong> has been successfully completed.</p>
+    <p>Transaction ID: <strong>${vars.transactionId}</strong></p>
+    <p><strong>Payer:</strong> ${vars.payerName} (${vars.payerWallet})</p>
+    <p><strong>Payee:</strong> ${vars.payeeName} (${vars.payeeWallet})</p>
+    <p>If you have any questions, please contact support.</p>
+    <p>Thank you for using Starkpay!</p>
     <p>Team Starkpay.</p>
   `,
 };

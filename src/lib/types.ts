@@ -4,3 +4,4 @@ export type ComponentProps = {
     isActive: boolean;
     onClick: () => void;
 };
+

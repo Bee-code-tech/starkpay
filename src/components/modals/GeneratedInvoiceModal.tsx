@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 interface GeneratedInvoiceModalProps {
   open: boolean;
   qrcode: string;
-  amount: number;
+  amount: string;
   url: string;
   coin: string;
   onOpenChange: (open: boolean) => void;
@@ -78,7 +78,7 @@ export const GeneratedInvoiceModal: React.FC<GeneratedInvoiceModalProps> = ({
 
         <Button
           onClick={handleCopyToClipboard}
-          className="w-full mt-4 bg-blue-600 text-white py-3 rounded-md"
+          className="w-full mt-4 bg-blue-600 text-white text-md py-6 rounded-md"
         >
           Copy to Clipboard
         </Button>
