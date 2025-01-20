@@ -2,105 +2,111 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useAccount } from "@starknet-react/core";
 import StarkpayLoader from "@/components/StarkpayLoader";
-import { format } from "date-fns";
+import { useSearchParams } from "next/navigation";
+import { getJsonFromPinata } from "@/services/ipfs";
+import { readContract, readETHBalance, readSTRKBalance, usePayETH, usePaySTRK } from "@/services/contracts";
+import { useAccount } from "@starknet-react/core";
 import Blockies from "react-blockies";
 import ConnectButton from "@/components/ConnectButton";
-import { readETHBalance, readSTRKBalance, usePayETH, usePaySTRK } from "@/services/contracts";
 
-const Invoice = () => {
-  const { address } = useAccount();
-  const { payETH } = usePayETH();
-  const { paySTRK } = usePaySTRK();
-  const [loading, setLoading] = useState(false);
+const PrivateInvoice = () => {
+  const [invoiceData, setInvoiceData] = useState<any | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [ethBalance, setEthBalance] = useState<string>("0.00");
-  const [strkBalance, setStrkBalance] = useState<string>("0.00");
-  const [activeTab, setActiveTab] = useState<"ETH" | "STRK">("ETH");
-
-  const [params, setParams] = useState<{
-    payee: string;
-    amount: number;
-    id: string;
-    currency: string;
-    description: string;
-    email: string;
-    date: string;
-    privateMode: boolean;
-  } | null>(null);
-
-  const decimals = 18;
-
-  const formatBalance = (value: bigint, decimals: number): string => {
-    return (Number(value) / Math.pow(10, decimals)).toFixed(4);
-  };
-
-  const toWei = (amount: number): bigint => {
-    return BigInt(Math.floor(amount * Math.pow(10, decimals)));
-  };
-
-  useEffect(() => {
-    if (address) {
-      const fetchBalances = async () => {
-        try {
-          const ethResponse = await readETHBalance("balance_of", [address]);
-          const strkResponse = await readSTRKBalance("balance_of", [address]);
-
-          if (ethResponse?.data) {
-            setEthBalance(formatBalance(ethResponse.data as bigint, decimals));
-          }
-          if (strkResponse?.data) {
-            setStrkBalance(formatBalance(strkResponse.data as bigint, decimals));
-          }
-        } catch (error) {
-          console.error("Error fetching balances:", error);
-        }
+  const searchParams = useSearchParams();
+    const hash = searchParams ? searchParams.get("hash") : null;
+    const { address } = useAccount();
+     const [ethBalance, setEthBalance] = useState<string>("0.00");
+      const [strkBalance, setStrkBalance] = useState<string>("0.00");
+    const [activeTab, setActiveTab] = useState<"ETH" | "STRK">(invoiceData?.coin === "ETH" ? "ETH" : "STRK");
+    const { payETH } = usePayETH();
+      const { paySTRK } = usePaySTRK();
+    
+    const decimals = 18;
+    
+      const formatBalance = (value: bigint, decimals: number): string => {
+        return (Number(value) / Math.pow(10, decimals)).toFixed(4);
       };
+    
+      const toWei = (amount: number): bigint => {
+        return BigInt(Math.floor(amount * Math.pow(10, decimals)));
+      };
+    
+    useEffect(() => {
+    if (address) {
+        const fetchBalances = async () => {
+        try {
+            const ethResponse = await readETHBalance("balance_of", [address]);
+            const strkResponse = await readSTRKBalance("balance_of", [address]);
 
-      fetchBalances();
+            if (ethResponse?.data) {
+            setEthBalance(formatBalance(ethResponse.data as bigint, decimals));
+            }
+            if (strkResponse?.data) {
+            setStrkBalance(formatBalance(strkResponse.data as bigint, decimals));
+            }
+        } catch (error) {
+            console.error("Error fetching balances:", error);
+        }
+        };
+
+        fetchBalances();
     }
-  }, [address]);
+    }, [address]);
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const payee = urlParams.get("payee") || "";
-    const amount = parseFloat(urlParams.get("amount") || "0");
-    const id = urlParams.get("id") || "";
-    const currency = urlParams.get("currency") || "";
-    const description = urlParams.get("description") || "";
-    const email = urlParams.get("email") || "";
-    const privateMode = urlParams.get("private") === "true";
-    const date = urlParams.get('date') || ""
+    const fetchInvoiceData = async () => {
+      try {
+        if (!hash) {
+          throw new Error("Hash parameter is missing in the URL.");
+        }
 
-    setParams({ payee, amount, id, currency, description, email, privateMode, date });
-  }, []);
+        console.log("Fetching CID from Starknet...");
+        const { data: cid, error } = await readContract("get_private_invoice_cid", [hash]);
+        if (error || !cid) {
+          throw new Error("Failed to fetch CID from contract.");
+        }
 
-  const handleSubmit = async () => {
-    if (!params) return;
+        console.log("Fetching JSON data from Pinata...");
+        const jsonData = await getJsonFromPinata(String(cid));
+        console.log("Fetched Data:", jsonData);
+        setInvoiceData(jsonData);
+      } catch (err) {
+        console.error("Error:", err);
+        setError(err instanceof Error ? err.message : "Something went wrong.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    const { payee, amount, id, currency, email, privateMode } = params;
+    fetchInvoiceData();
+  }, [hash]);
+    
+    const handleSubmit = async () => {
+    if (!hash) return;
+
+    const { address, amount, id, coin, email, privateMode } = invoiceData;
 
     try {
       setLoading(true);
 
-      const amountInWei = toWei(amount + (privateMode ? 0.02 : 0));
+      const amountInWei = toWei(Number(amount) + (privateMode ? 0.02 : 0));
       let transactionHash;
 
-      if (currency === "ETH") {
-        const payETHArgs = [payee, amountInWei];
-        const confirmArgs = [payee, email, id];
+      if (coin === "ETH") {
+        const payETHArgs = [address, amountInWei];
+        const confirmArgs = [address, email, id];
         const result = await payETH("transfer", payETHArgs, "confirm_payment", confirmArgs);
         transactionHash = result.transactionHash;
       } else {
-        const paySTRKArgs = [payee, amountInWei];
-        const confirmArgs = [payee, email, id];
+        const paySTRKArgs = [address, amountInWei];
+        const confirmArgs = [address, email, id];
         const result = await paySTRK("transfer", paySTRKArgs, "confirm_payment", confirmArgs);
         transactionHash = result.transactionHash;
       }
 
       if (transactionHash) {
-        console.log("Payment successful:", transactionHash);
 
         await fetch("/api/send", {
           method: "POST",
@@ -112,12 +118,12 @@ const Invoice = () => {
             variables: {
               name: "Starkpay User",
               amount,
-              coin: currency,
+              coin: coin,
               transactionId: transactionHash,
               payerName: "",
               payerWallet: address,
-              payeeName: "",
-              payeeWallet: payee,
+              addressName: "",
+              addressWallet: address,
             },
           }),
         });
@@ -132,8 +138,17 @@ const Invoice = () => {
     }
   };
 
-  if (!params) {
+  if (loading) {
     return <StarkpayLoader />;
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-red-500 mt-12">
+        <h2 className="text-lg font-bold">Error</h2>
+        <p>{error}</p>
+      </div>
+    );
   }
 
   return (
@@ -144,8 +159,6 @@ const Invoice = () => {
           <h2 className="text-xl font-bold mb-6">Pay Invoice</h2>
 
           {/* Payer Section */}
-                  <p className="text-md font-bold mb-2">From</p>
-
           <div className="rounded-lg bg-neutral-700 p-4 mb-6">
             {address ? (
               <>
@@ -196,13 +209,12 @@ const Invoice = () => {
             )}
           </div>
 
-          {/* Payee Section */}
-            <p className="text-md font-bold mb-2">To</p>
+          {/* address Section */}
           <div className="rounded-lg bg-neutral-700 p-4 mb-6">
             <div className="flex justify-start items-center">
               <span className="flex items-center gap-2 text-white font-bold text-md">
-                <Blockies seed={params.payee.toLowerCase() || ""} size={10} scale={5} className="mr-2 h-8 w-8 rounded-full" />
-                {params.payee.slice(0, 6).concat("...").concat(params.payee.slice(-5))}
+                <Blockies seed={invoiceData.address.toLowerCase() || ""} size={10} scale={5} className="mr-2 h-8 w-8 rounded-full" />
+                {invoiceData.address.slice(0, 6).concat("...").concat(invoiceData.address.slice(-5))}
               </span>
             </div>
           </div>
@@ -210,7 +222,7 @@ const Invoice = () => {
           <div className="flex w-full flex-col items-center justify-center mb-4">
             <p className="text-md font-thin">Amount</p>
             <h1 className="text-2xl font-bold">
-              {params.privateMode ? params.amount + 0.02 : params.amount} {params.currency}
+              {invoiceData.privateMode ? Number(invoiceData.amount) + 0.02 : invoiceData.amount} {invoiceData.coin}
             </h1>
           </div>
 
@@ -222,19 +234,14 @@ const Invoice = () => {
             <div className="flex justify-between items-center mb-2">
               <p className="text-sm text-neutral-400">Description:</p>
               <p className="text-sm text-neutral-300 break-words whitespace-normal">
-                {params.description}
+                {invoiceData.description}
               </p>
             </div>
-            {/* <div className="flex justify-between items-center mb-2">
-              <p className="text-sm text-neutral-400">Due Date:</p>
-              <p className="text-sm text-neutral-300">
-                {params.date ? format(params.date, "PPP") : "Not set"}
-              </p>
-            </div> */}
+            
             <div className="flex justify-between items-center mb-2">
               <p className="text-sm text-neutral-400">Private Mode:</p>
               <p className="text-sm text-neutral-300">
-                {params.privateMode ? "Enabled" : "Disabled"}
+                {invoiceData.privateMode ? "Enabled" : "Disabled"}
               </p>
             </div>
           </div>
@@ -247,21 +254,21 @@ const Invoice = () => {
             <div className="flex justify-between items-center mb-2">
               <p className="text-sm text-neutral-400">InvoiceID:</p>
               <p className="text-sm text-neutral-300 break-words whitespace-normal">
-                {params.id}
+                {invoiceData.id}
               </p>
             </div>
             <div className="flex justify-between items-center mb-2">
               <p className="text-sm text-neutral-400">Invoice Amount:</p>
               <p className="text-sm text-neutral-300">
-                {params.amount} {params.currency}
+                {invoiceData.amount} {invoiceData.coin}
               </p>
             </div>
             {
-              params.privateMode && (
+              invoiceData.privateMode && (
                 <div className="flex justify-between items-center mb-2">
                   <p className="text-sm text-neutral-400">Invoice fee:</p>
                   <p className="text-sm text-neutral-300">
-                    0.02 {params.currency}
+                    0.02 {invoiceData.coin}
                   </p>
                 </div>
               )
@@ -270,7 +277,7 @@ const Invoice = () => {
             <div className="flex justify-between items-center">
               <p className="text-sm font-semibold">Total Amount:</p>
               <p className="text-sm font-bold text-neutral-100">
-                {params.amount + (params.privateMode ? 0.02 : 0)} {params.currency}
+                {Number(invoiceData.amount) + (invoiceData.privateMode ? 0.02 : 0)} {invoiceData.coin}
               </p>
             </div>
           </div>
@@ -288,4 +295,4 @@ const Invoice = () => {
   );
 };
 
-export default Invoice;
+export default PrivateInvoice;

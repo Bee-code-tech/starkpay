@@ -149,6 +149,78 @@ export const useWriteContract = () => {
   return { writeContract, loading };
 };
 
+export const useWritePrivateContract = () => {
+  const { account } = useAccount();
+  const [loading, setLoading] = useState(false);
+  const [eventData, setEventData] = useState<any>(null);
+
+  const writePrivateContract = async (
+    method: string,
+    args: any[] = [],
+  ) => {
+    setLoading(true);
+    setEventData(null);
+
+    try {
+      if (!account) {
+        throw new Error("No wallet connected.");
+      }
+
+      const contract = await getContract();
+
+      const contractWithSigner = new Contract(
+        contract.abi as Abi,
+        CONTRACT_ADDRESS,
+        account
+      );
+
+      console.log(`Invoking contract method '${method}' with args:`, args);
+      const response = await contractWithSigner.invoke(method, args);
+      console.log("Transaction Hash:", response.transaction_hash);
+
+      console.log("Waiting for transaction receipt...");
+      const receipt = await provider.waitForTransaction(response.transaction_hash);
+
+      if (!receipt) {
+        throw new Error("Transaction receipt not found.");
+      }
+
+      console.log("Transaction Receipt:", receipt);
+
+      const events = contract.parseEvents(receipt)
+
+      console.log('event', events);
+      
+
+      const invoiceEvent = events[0]["invoice::invoice::StarkPay::PrivateInvoice"]
+      const hash = invoiceEvent.invoice_hash
+      setEventData(hash)
+
+      console.log('type', invoiceEvent);
+      
+
+      return {
+        transactionHash: response.transaction_hash,
+        event: invoiceEvent,
+        error: null,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`Error writing to private contract: ${error.message}`);
+      } else {
+        console.error(`Error writing to private contract: ${String(error)}`);
+      }
+      return { transactionHash: null, event: null, error };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { writePrivateContract, loading, eventData };
+};
+
+
+
 export const usePaySTRK = () => {
   const { account } = useAccount();
   const [loading, setLoading] = useState(false);

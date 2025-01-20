@@ -25,12 +25,13 @@ import { InvoiceModal } from "@/components/modals/InvoiceModal";
 import Navbar from "@/components/Navbar";
 import { useAccount } from "@starknet-react/core";
 import { DialogComponent } from "@/components/modals/DialogComponent";
-import { readContract, useWriteContract } from "@/services/contracts";
+import { readContract, useWriteContract, useWritePrivateContract } from "@/services/contracts";
 import { useRouter } from "next/navigation";
 import { GeneratedInvoiceModal } from "@/components/modals/GeneratedInvoiceModal";
 import QRCode from "qrcode";
 import StarkpayLoader from "@/components/StarkpayLoader";
 import toast from "react-hot-toast";
+import { postJsonToPinata } from "@/services/ipfs";
 
 const Home = () => {
   const [network, setNetwork] = useState<"starknet" | "ethereum">("starknet");
@@ -47,6 +48,7 @@ const Home = () => {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter()
   const [invoiceUrl, setInvoiceUrl] = useState<string>("");
+  const [privateinvoiceUrl, setPrivateInvoiceUrl] = useState<string>("");
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [generate, setGenerate] = useState(false)
   const { writeContract } = useWriteContract();
@@ -54,6 +56,8 @@ const Home = () => {
   const [isEmailValid, setIsEmailValid] = useState<boolean | null>(null);
   const [validationMessage, setValidationMessage] = useState<string>("");
   const [exist, setExist] = useState(false)
+  const { writePrivateContract,  eventData } = useWritePrivateContract()
+  const [cid, setCid] = useState('')
 
   const generateUniqueId = (): string => {
     const timestamp = Date.now().toString(36).slice(-4);
@@ -138,13 +142,8 @@ const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
    }
      
    }, [address]);
-  
-  console.log('is exsi', exist);
-  console.log('data', data);
-  
-  
 
-
+  console.log('exist', exist);
   
   
 
@@ -175,15 +174,80 @@ const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     return;
    } 
    
-   console.log('amount', amount);
-   
+   if (privateMode) {
+     try {
+      
+       const formattedDate = date ? Math.floor(date.getTime() / 1000) : 0
+       setLoading(true);
+       
+        // Upload JSON to Pinata
+        const privateData = {
+          name: `Invoice for ${amount} ${coin}`,
+          coin,
+          description,
+          date: formattedDate,
+          email,
+          privateMode,
+          address,
+          amount,
+          id: invoiceId,
+        };
+
+        console.log("Uploading JSON to Pinata...");
+        const uploadedCid = await postJsonToPinata(privateData, privateData.name);
+        setCid(uploadedCid);
+        console.log("Uploaded CID:", uploadedCid);
+      
+
+      const method = "private_invoice";
+      const args = [
+        email,
+        amount, 
+        uploadedCid
+      ];
+  
+       await writePrivateContract(method, args);
    
 
-  try {
+    if (error) {
+      throw new Error("Failed to generate invoice");
+    }
+
+       
+
+     fetch("/api/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        to: email,
+        subject: "Payment Request from Starkpay",
+        template: "payment",
+        variables: {
+          username: data?.username,
+          amount: amount,
+          coin,
+          transactionLink: privateinvoiceUrl,
+        },
+      }),
+    });
+
+  } catch (err) {
+    console.error("Error generating invoice:", err);
+    setError("Failed to generate invoice. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+   } else {
+      try {
     const baseUrl =
       process.env.NODE_ENV === "development"
         ? "http://localhost:3000"
         : "https://starkpay.vercel.app";
+
+        console.log('descrition', description, amount);
+        
 
         const constructedUrl = `${baseUrl}/invoice?payee=${address}&amount=${amount}&currency=${coin}&private=${privateMode}&id=${invoiceId}&description=${description}&date=${ date ? Math.floor(date.getTime() / 1000) : 0}&email=${email}`;
         setInvoiceUrl(constructedUrl);
@@ -193,18 +257,18 @@ const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setLoading(true);
 
   
-    const { transactionHash, error } = await writeContract("create_invoice", [
-      invoiceId,
-      amount,
-      coin,
-      description,
-      email,
-      date ? Math.floor(date.getTime() / 1000) : 0,
-    ]);
+        const { transactionHash, error } = await writeContract("create_invoice", [
+          invoiceId,
+          amount,
+          coin,
+          description,
+          email,
+          date ? Math.floor(date.getTime() / 1000) : 0,
+        ]);
 
-    if (error) {
-      throw new Error("Failed to generate invoice");
-    }
+        if (error) {
+          throw new Error("Failed to generate invoice");
+        }
 
     console.log("Transaction Hash:", transactionHash);
     toast.success('Invoice Generated Successfully')
@@ -227,15 +291,33 @@ const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       }),
     });
 
-    setGenerate(true);
-  } catch (err) {
-    console.error("Error generating invoice:", err);
-    setError("Failed to generate invoice. Please try again.");
-  } finally {
-    setLoading(false);
+      setGenerate(true);
+    } catch (err) {
+      console.error("Error generating invoice:", err);
+      setError("Failed to generate invoice. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+    }
+ 
+ };
+  
+  useEffect(() => {
+    if (eventData) {
+     const baseUrl =
+        process.env.NODE_ENV === "development"
+          ? "http://localhost:3000"
+          : "https://starkpay.vercel.app";
+          
+          
+    console.log("Event Data Updated:", eventData);
+    const constructedUrl = `${baseUrl}/private?hash=${eventData}`;
+    setPrivateInvoiceUrl(constructedUrl);
+    generateQRCode(constructedUrl);
+    setGenerate(true)
+    toast.success("Private Invoice Generated Successfully");
   }
-};
-
+}, [eventData]);
 
 
   return (
@@ -457,7 +539,7 @@ const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             amount={amount || ''}
             coin={coin}
             open={generate}
-            url={invoiceUrl}
+            url={privateMode ? privateinvoiceUrl : invoiceUrl}
             onOpenChange={setGenerate}
           />
            
