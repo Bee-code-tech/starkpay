@@ -17,7 +17,7 @@ pub trait StarkPayTrait<T> {
     fn create_invoice(
             ref self: T,
             invoice_id: felt252,
-            amount: felt252,
+            amount: ByteArray,
             currency: felt252,
             description: felt252,
             recipient_mail: felt252,
@@ -27,11 +27,11 @@ pub trait StarkPayTrait<T> {
     fn private_invoice(
         ref self: T,
         recipient_mail: felt252,
-        amount: felt252,
-        cid: felt252,
+        amount: ByteArray,
+        cid: ByteArray,
     );
 
-    fn get_private_invoice_cid(self: @T, invoice_hash: felt252) -> felt252;
+    fn get_private_invoice_cid(self: @T, invoice_hash: felt252) -> ByteArray;
 
     fn get_invoice(
         self: @T,
@@ -109,7 +109,7 @@ pub mod StarkPay {
         invoice_id: felt252,
         creator: ContractAddress,
         recipient_mail: felt252,
-        amount: felt252,
+        amount: ByteArray,
         description: felt252,
         currency: felt252,
         due_date: u64,
@@ -124,7 +124,7 @@ pub mod StarkPay {
         invoice_id: felt252,
         creator: ContractAddress,
         recipient_mail: felt252,
-        amount: felt252,
+        amount: ByteArray,
         description: felt252,
         currency: felt252,
         due_date: u64,
@@ -139,7 +139,7 @@ pub mod StarkPay {
         users: Map<ContractAddress, User>,
 
         // private invoice
-        private_invoices: Map<felt252, felt252>,
+        private_invoices: Map<felt252, ByteArray>,
 
         // all invoices
         all_invoices_count: u64,
@@ -240,7 +240,7 @@ pub mod StarkPay {
         fn create_invoice(
             ref self: ContractState,
             invoice_id: felt252,
-            amount: felt252,
+            amount: ByteArray,
             currency: felt252,
             description: felt252,
             recipient_mail: felt252,
@@ -279,23 +279,23 @@ pub mod StarkPay {
             (invoice_id, caller)
         }
 
-        fn private_invoice(ref self: ContractState, recipient_mail: felt252, amount: felt252, cid: felt252,) {
+        fn private_invoice(ref self: ContractState, recipient_mail: felt252, amount: ByteArray, cid: ByteArray,) {
 
             let invoice_hash = PedersenTrait::new(0)
                 .update(get_caller_address().into())
                 .update(get_block_timestamp().into())
-                .update(cid)
                 .update(6)
                 .finalize();
 
             self.private_invoices.entry(invoice_hash).write(cid);
 
-            self.emit(PrivateInvoice{
+            self.emit(PrivateInvoice {
                 invoice_hash
             });
+
         }
 
-        fn get_private_invoice_cid(self: @ContractState, invoice_hash: felt252) -> felt252 {
+        fn get_private_invoice_cid(self: @ContractState, invoice_hash: felt252) -> ByteArray {
 
             self.private_invoices.entry(invoice_hash).read()
         }
@@ -485,7 +485,7 @@ pub mod StarkPay {
             ref self: ContractState,
             caller: ContractAddress,
             invoice_id: felt252,
-            amount: felt252,
+            amount: ByteArray,
             currency: felt252,
             recipient_mail: felt252,
             due_date: u64,
