@@ -375,3 +375,91 @@ export const usePayETH = () => {
   return { payETH, loading };
 };
 
+export const usePayPrivateETH = () => {
+  const { account } = useAccount();
+  const [loading, setLoading] = useState(false);
+  
+  
+
+  const payETH = async (
+    method: string,
+    args: any[] = [],
+   
+  ) => {
+    setLoading(true);
+
+    try {
+      if (!account) {
+        throw new Error("No wallet connected.");
+      }
+       const contract = await getETHContract();
+      const contractWithSigner = new Contract(
+        contract.abi as Abi,
+        ETH_CONTRACT_ADDRESS,
+        account
+      );
+      const response = await contractWithSigner.invoke(method, args);
+      await provider.waitForTransaction(response.transaction_hash);
+
+      console.log("payETH transaction hash:", response.transaction_hash);
+
+     
+
+     
+
+      return { transactionHash: response.transaction_hash, error: null };
+    } catch (error) {
+      console.error("Error in paySTRK:", error);
+      return { transactionHash: null, error };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { payETH, loading };
+};
+
+export const usePayPrivateSTRK = () => {
+  const { account } = useAccount();
+  const [loading, setLoading] = useState(false);
+  
+  
+
+  const paySTRK = async (
+    method: string,
+    args: any[] = [],
+   
+  ) => {
+    setLoading(true);
+
+    try {
+      if (!account) {
+        throw new Error("No wallet connected.");
+      }
+       const contract = await getETHContract();
+      const contractWithSigner = new Contract(
+        contract.abi as Abi,
+        ETH_CONTRACT_ADDRESS,
+        account
+      );
+      const response = await contractWithSigner.invoke(method, args);
+      await provider.waitForTransaction(response.transaction_hash);
+
+      console.log("payETH transaction hash:", response.transaction_hash);
+
+     
+
+     
+
+      return { transactionHash: response.transaction_hash, error: null };
+    } catch (error) {
+      console.error("Error in paySTRK:", error);
+      return { transactionHash: null, error };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { paySTRK, loading };
+};
+

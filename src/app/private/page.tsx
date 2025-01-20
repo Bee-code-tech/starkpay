@@ -3,9 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import StarkpayLoader from "@/components/StarkpayLoader";
-import { useSearchParams } from "next/navigation";
 import { getJsonFromPinata } from "@/services/ipfs";
-import { readContract, readETHBalance, readSTRKBalance, usePayETH, usePaySTRK } from "@/services/contracts";
+import { readContract, readETHBalance, readSTRKBalance, usePayPrivateETH, usePayPrivateSTRK} from "@/services/contracts";
 import { useAccount } from "@starknet-react/core";
 import Blockies from "react-blockies";
 import ConnectButton from "@/components/ConnectButton";
@@ -14,50 +13,28 @@ const PrivateInvoice = () => {
   const [invoiceData, setInvoiceData] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const searchParams = useSearchParams();
-    const hash = searchParams ? searchParams.get("hash") : null;
-    const { address } = useAccount();
-     const [ethBalance, setEthBalance] = useState<string>("0.00");
-      const [strkBalance, setStrkBalance] = useState<string>("0.00");
-    const [activeTab, setActiveTab] = useState<"ETH" | "STRK">(invoiceData?.coin === "ETH" ? "ETH" : "STRK");
-    const { payETH } = usePayETH();
-      const { paySTRK } = usePaySTRK();
-    
-    const decimals = 18;
-    
-      const formatBalance = (value: bigint, decimals: number): string => {
-        return (Number(value) / Math.pow(10, decimals)).toFixed(4);
-      };
-    
-      const toWei = (amount: number): bigint => {
-        return BigInt(Math.floor(amount * Math.pow(10, decimals)));
-      };
-    
-    useEffect(() => {
-    if (address) {
-        const fetchBalances = async () => {
-        try {
-            const ethResponse = await readETHBalance("balance_of", [address]);
-            const strkResponse = await readSTRKBalance("balance_of", [address]);
+  const { address } = useAccount();
+  const [ethBalance, setEthBalance] = useState<string>("0.00");
+  const [strkBalance, setStrkBalance] = useState<string>("0.00");
+  const [activeTab, setActiveTab] = useState<"ETH" | "STRK">("ETH");
+  const { payETH } = usePayPrivateETH();
+  const { paySTRK } = usePayPrivateSTRK();
+  const decimals = 18;
 
-            if (ethResponse?.data) {
-            setEthBalance(formatBalance(ethResponse.data as bigint, decimals));
-            }
-            if (strkResponse?.data) {
-            setStrkBalance(formatBalance(strkResponse.data as bigint, decimals));
-            }
-        } catch (error) {
-            console.error("Error fetching balances:", error);
-        }
-        };
+  const formatBalance = (value: bigint, decimals: number): string => {
+    return (Number(value) / Math.pow(10, decimals)).toFixed(4);
+  };
 
-        fetchBalances();
-    }
-    }, [address]);
+  const toWei = (amount: number): bigint => {
+    return BigInt(Math.floor(amount * Math.pow(10, decimals)));
+  };
 
   useEffect(() => {
     const fetchInvoiceData = async () => {
       try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const hash = urlParams.get("hash");
+
         if (!hash) {
           throw new Error("Hash parameter is missing in the URL.");
         }
@@ -81,12 +58,34 @@ const PrivateInvoice = () => {
     };
 
     fetchInvoiceData();
-  }, [hash]);
-    
-    const handleSubmit = async () => {
-    if (!hash) return;
+  }, []);
 
-    const { address, amount, id, coin, email, privateMode } = invoiceData;
+  useEffect(() => {
+    if (address) {
+      const fetchBalances = async () => {
+        try {
+          const ethResponse = await readETHBalance("balance_of", [address]);
+          const strkResponse = await readSTRKBalance("balance_of", [address]);
+
+          if (ethResponse?.data) {
+            setEthBalance(formatBalance(ethResponse.data as bigint, decimals));
+          }
+          if (strkResponse?.data) {
+            setStrkBalance(formatBalance(strkResponse.data as bigint, decimals));
+          }
+        } catch (error) {
+          console.error("Error fetching balances:", error);
+        }
+      };
+
+      fetchBalances();
+    }
+  }, [address]);
+
+  const handleSubmit = async () => {
+    if (!invoiceData) return;
+
+    const { address: payeeAddress, amount, id, coin, email, privateMode } = invoiceData;
 
     try {
       setLoading(true);
@@ -95,18 +94,17 @@ const PrivateInvoice = () => {
       let transactionHash;
 
       if (coin === "ETH") {
-        const payETHArgs = [address, amountInWei];
-        const confirmArgs = [address, email, id];
-        const result = await payETH("transfer", payETHArgs, "confirm_payment", confirmArgs);
+        const payETHArgs = [payeeAddress, amountInWei];
+        const result = await payETH("transfer", payETHArgs);
         transactionHash = result.transactionHash;
       } else {
-        const paySTRKArgs = [address, amountInWei];
-        const confirmArgs = [address, email, id];
-        const result = await paySTRK("transfer", paySTRKArgs, "confirm_payment", confirmArgs);
+        const paySTRKArgs = [payeeAddress, amountInWei];
+        const result = await paySTRK("transfer", paySTRKArgs);
         transactionHash = result.transactionHash;
       }
 
       if (transactionHash) {
+        console.log("Payment successful:", transactionHash);
 
         await fetch("/api/send", {
           method: "POST",
@@ -118,12 +116,12 @@ const PrivateInvoice = () => {
             variables: {
               name: "Starkpay User",
               amount,
-              coin: coin,
+              coin,
               transactionId: transactionHash,
               payerName: "",
               payerWallet: address,
-              addressName: "",
-              addressWallet: address,
+              payeeName: "",
+              payeeWallet: payeeAddress,
             },
           }),
         });
@@ -152,7 +150,7 @@ const PrivateInvoice = () => {
   }
 
   return (
-    <section>
+     <section>
       {loading && <StarkpayLoader />}
       <div className="max-w-lg mx-auto px-2 my-12">
         <div className="rounded-2xl bg-[#212529] p-4 text-white border-neutral-500 border">
