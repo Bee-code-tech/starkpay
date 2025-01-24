@@ -156,7 +156,8 @@ const PrivateInvoice = () => {
         <div className="rounded-2xl bg-[#212529] p-4 text-white border-neutral-500 border">
           <h2 className="text-xl font-bold mb-6">Pay Invoice</h2>
 
-          {/* Payer Section */}
+                  {/* Payer Section */}
+                  
           <div className="rounded-lg bg-neutral-700 p-4 mb-6">
             {address ? (
               <>
