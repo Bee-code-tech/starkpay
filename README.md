@@ -8,3 +8,8 @@
 - Paid Invoices: Users can use advanced features, including a detailed payment history and proof of earnings, perfect for documentation purposes such as visa applications or financial audits.
 - Rate Converter: Users can easily convert cryptocurrency amounts to fiat values, providing clarity for both senders and receivers during transactions.
 - Email Notifications: Notify payers instantly via email when invoices are sent or payments are due, reducing the risk of late payments.
+
+# What's Next?
+- Telegram Bot
+- Dashboard Analytics
+- Multi-currency support
